@@ -159,6 +159,7 @@
     <button class="tab on" data-tab="live">ライブ</button>
     <button class="tab" data-tab="scout">サーチ</button>
     <button class="tab" data-tab="koran">個ラン</button>
+    <button class="tab" data-tab="watch">観戦</button>
   </div>
 </header>
 <main>
@@ -216,6 +217,21 @@
   <div id="koranBody"><div class="load">プレイヤー名かユーザーIDを入れて「検索」</div></div>
 </div>
 
+<div id="pane-watch" class="hide">
+  <div class="card">
+    <div class="row">
+      <label style="font-size:13px;color:var(--mut)">対象日</label>
+      <select id="watchDateSel"></select>
+      <input id="watchA" placeholder="団A（団名 または 団ID）" style="flex:1;min-width:140px">
+      <span style="color:var(--mut)">vs</span>
+      <input id="watchB" placeholder="団B（団名 または 団ID）" style="flex:1;min-width:140px">
+      <button class="primary" onclick="loadWatch()">観戦</button>
+    </div>
+    <div style="font-size:11px;color:var(--mut);margin-top:6px">霞桜団を介さず、任意の2団の本戦当日ぶん貢献度・時速・総合順位を比較します。団名は完全一致優先(上位3000位内)。見つからない場合はゲーム内URLの団IDで指定</div>
+  </div>
+  <div id="watchBody"><div class="load">2団を入力して「観戦」</div></div>
+</div>
+
 </main>
 <script>
 const $=s=>document.querySelector(s);
@@ -229,6 +245,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   $('#pane-live').classList.toggle('hide', b.dataset.tab!=='live');
   $('#pane-scout').classList.toggle('hide', b.dataset.tab!=='scout');
   $('#pane-koran').classList.toggle('hide', b.dataset.tab!=='koran');
+  $('#pane-watch').classList.toggle('hide', b.dataset.tab!=='watch');
 });
 // 面の塗り。上端を濃く下端を透明に抜く。初回は chartArea がまだ無いので透明を返す
 const areaGrad=(hex,top)=>ctx=>{
@@ -376,6 +393,13 @@ function gbfToday(){
   if(+g('hour')<5) d.setUTCDate(d.getUTCDate()-1);
   return d.toISOString().slice(0,10);
 }
+function fillWatchDates(){
+  const battle=(cfg.schedules||[]).filter(s=>s.day_of>=4);
+  const sel=$('#watchDateSel'); if(!sel) return; sel.innerHTML='';
+  battle.forEach(s=>{const o=document.createElement('option');o.value=s.day;o.textContent=`本戦${s.day_of-3}日目 (${s.day})`;sel.appendChild(o);});
+  const today=gbfToday(), i=battle.findIndex(s=>s.day===today);
+  sel.selectedIndex=i>=0?i:Math.max(0,battle.length-1);
+}
 function fillDates(){
   const battle=(cfg.schedules||[]).filter(s=>s.day_of>=4);
   const sel=$('#dateSel'); sel.innerHTML='';
@@ -447,6 +471,7 @@ async function init(raid){
   }
   fillDates();
   fillKoranDays();
+  fillWatchDates();
   renderKoranMem();      // 一覧の既定はcfg.membersなので、設定が届いてから作る
   // 開いた時点で最新を出す(「更新」を押さなくてよい 2026-09-21)。本戦日で相手が保存されて
   // いないときは集計できないので従来どおり入力待ち
@@ -1426,6 +1451,75 @@ async function loadKoranHour(q, sch, name, s2, s1){
     {label:name,data:T.map(t=>psp[t]??null),borderColor:'#378ADD',tension:0.35,borderWidth:2,pointRadius:0,spanGaps:true},
     ...(s2?[{label:'英雄(2000位)',data:T.map(t=>b2s[t]??null),borderColor:'#D85A30',tension:0.35,borderWidth:1.4,pointRadius:0,spanGaps:true}]:[]),
     ...(s1?[{label:'10万位',data:T.map(t=>b1s[t]??null),borderColor:'#1D9E75',tension:0.35,borderWidth:1.4,pointRadius:0,spanGaps:true}]:[])
+  ]);
+}
+async function loadWatch(){
+  const a=$('#watchA').value.trim(), b=$('#watchB').value.trim();
+  if(!a||!b){ $('#watchBody').innerHTML='<div class="card bad">2団とも入力してください</div>'; return; }
+  const box=$('#watchBody');
+  box.innerHTML='<div class="load">2団の毎時データを取得中…(30秒ほど)</div>';
+  const p=new URLSearchParams({raid:$('#raidSel').value,date:$('#watchDateSel').value,a,b});
+  let d;
+  try{ d=await (await fetch('/api/watch?'+p)).json(); }
+  catch(e){ box.innerHTML='<div class="card bad">取得に時間がかかり切断されました。もう一度「観戦」を押してください</div>'; return; }
+  if(d.error){ box.innerHTML=`<div class="card bad">${d.error}</div>`; return; }
+  if(d.candidates){
+    const rows=d.candidates.map(c=>`<tr><td style="text-align:left">${c.name}</td><td>${c.prev!=null?c.prev+'億':'—'}</td><td>${c.rank?c.rank+'位':'—'}</td><td><button onclick="$('#watch${d.which==='a'?'A':'B'}').value='${c.gid}';loadWatch()">この団を選択</button></td></tr>`).join('');
+    box.innerHTML=`<div class="card"><h2>同名団が${d.candidates.length}団あります — ${d.prev_label}貢献度・総合順位で選択してください</h2>
+      <table><tr><th style="text-align:left">団名</th><th>${d.prev_label}貢献度</th><th>総合順位</th><th></th></tr>${rows}</table></div>`;
+    return;
+  }
+  const H=d.hours, A=d.a, B=d.b;
+  const ac=H.map(t=>A.cum[t]??null), bc=H.map(t=>B.cum[t]??null);
+  const asp=H.map(t=>A.speed[t]??null), bsp=H.map(t=>B.speed[t]??null);
+  const ark=H.map(t=>A.rank[t]??null), brk=H.map(t=>B.rank[t]??null);
+  const lastIdx=ac.map((v,i)=>v!=null&&bc[i]!=null?i:-1).reduce((x,y)=>Math.max(x,y),-1);
+  const lead=d.lead, la=lastIdx>=0?ac[lastIdx]:null, lb=lastIdx>=0?bc[lastIdx]:null;
+  const mxCum=Math.max(la??0,lb??0)||1;
+  const leadHtml=lead==null?'—':(lead>=0
+    ?`<span class="up"><span class="mk">▲</span>+${lead.toFixed(1)}<span class="u" style="font-size:14px;color:var(--mut)">億</span></span>`
+    :`<span class="dn"><span class="mk">▼</span>${lead.toFixed(1)}<span class="u" style="font-size:14px;color:var(--mut)">億</span></span>`);
+  const aUrl=A.gid?`https://game.granbluefantasy.jp/#guild/detail/${A.gid}`:null;
+  const bUrl=B.gid?`https://game.granbluefantasy.jp/#guild/detail/${B.gid}`:null;
+  const aLink=aUrl?`<a href="${aUrl}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none">${A.name} ↗</a>`:A.name;
+  const bLink=bUrl?`<a href="${bUrl}" target="_blank" rel="noopener" style="color:var(--red);text-decoration:none">${B.name} ↗</a>`:B.name;
+  let chips='';
+  if(lastIdx>0&&asp[lastIdx]!=null&&bsp[lastIdx]!=null){
+    const dd=asp[lastIdx]-bsp[lastIdx];
+    const mv=dd>0.05?`<b>▲${f1(dd)}億</b> ${A.name}が拡大`:dd<-0.05?`<b>▼${f1(-dd)}億</b> ${B.name}が拡大`:`<b>±0</b> 横ばい`;
+    chips=`<div class="chips" title="${H[lastIdx-1]}→${H[lastIdx]}の1時間">
+      <span class="chip"><i style="background:var(--blue)"></i><span class="k">直近1H</span>${f1(asp[lastIdx])}億</span>
+      <span class="chip"><i style="background:var(--red)"></i><span class="k">直近1H</span>${f1(bsp[lastIdx])}億</span>
+      <span class="chip"><span class="k">差の動き</span>${mv}</span></div>`;
+  }
+  const dcell=v=>`<td class="${v!=null?(v>=0?'good':'bad'):''}">${v!=null?(v>=0?'+':'')+f1(v):'—'}</td>`;
+  const mA=mxOf(asp), mB=mxOf(bsp);
+  const trows=H.map((t,i)=>{ if(ac[i]==null&&bc[i]==null)return'';
+    const dd=(ac[i]!=null&&bc[i]!=null)?ac[i]-bc[i]:null;
+    return `<tr><td>${t.replace(':00','時').replace(/^0/,'')}</td><td>${f1(ac[i])}</td><td style="color:var(--mut)">${ark[i]?ark[i].toLocaleString('ja-JP')+'位':'—'}</td><td class="sp${mxCls(asp[i],mA)}">${f1(asp[i])}</td>`
+      +`<td>${f1(bc[i])}</td><td style="color:var(--mut)">${brk[i]?brk[i].toLocaleString('ja-JP')+'位':'—'}</td><td class="sp${mxCls(bsp[i],mB)}">${f1(bsp[i])}</td>${dcell(dd)}</tr>`;}).join('');
+  box.innerHTML=`
+    <div class="hero"><div class="heroTop">
+      <div class="heroLead"><div class="k">${A.name} との差</div><div class="v">${leadHtml}</div></div>
+      <div class="heroMid">
+        <div class="st">${lead==null?'':(lead>=0?`${A.name} リード`:`${B.name} リード`)}<span class="k" style="font-weight:400">　／　${aLink} vs ${bLink}</span></div>
+        <div class="bar"><i style="width:${(la??0)/mxCum*100}%;background:var(--blue)"></i></div>
+        <div class="bar" style="margin-top:6px"><i style="width:${(lb??0)/mxCum*100}%;background:var(--red)"></i></div>
+        ${chips}
+      </div>
+      <div class="heroWin"><div class="k">最高時速</div><div class="v" style="font-size:22px">${f1(A.peak)}<span class="u">億/h</span></div><div class="k">${A.peak_time?A.peak_time.replace(':00','時').replace(/^0/,''):''}　vs　${f1(B.peak)}億/h(${B.peak_time?B.peak_time.replace(':00','時').replace(/^0/,''):''})</div></div>
+    </div></div>
+    <div class="strip">
+      <div><div class="k">${A.name}</div><div class="v">${f1(la)}<span class="u">億</span></div><div class="k">${ark[lastIdx]?ark[lastIdx]+'位':''}</div></div>
+      <div><div class="k">${B.name}</div><div class="v">${f1(lb)}<span class="u">億</span></div><div class="k">${brk[lastIdx]?brk[lastIdx]+'位':''}</div></div>
+      <div><div class="k">最高時速</div><div class="v">${f1(A.peak)}<span class="u">億/h</span></div><div class="k">${A.name}</div></div>
+      <div><div class="k">最高時速</div><div class="v">${f1(B.peak)}<span class="u">億/h</span></div><div class="k">${B.name}</div></div>
+    </div>
+    <div class="card"><h2>${d.label}貢献度の推移（億）</h2><div class="chartbox"><canvas id="wCum"></canvas></div></div>
+    <div class="card"><h2>${d.label}推移（数値・億）</h2><div class="tw"><table><tr><th>時刻</th><th>${A.name}</th><th>順位</th><th>時速</th><th>${B.name}</th><th>順位</th><th>時速</th><th>差</th></tr>${trows}</table></div></div>`;
+  mkChart('#wCum','line',H.map(t=>t.replace(':00','時').replace(/^0/,'')),[
+    {label:A.name,data:ac,borderColor:'#378ADD',area:'3d',endLabel:true,tension:.35,pointRadius:0,borderWidth:2,spanGaps:true},
+    {label:B.name,data:bc,borderColor:'#D85A30',endLabel:true,tension:.35,pointRadius:0,borderWidth:2,spanGaps:true}
   ]);
 }
 init();

@@ -667,6 +667,92 @@ def api_live(q):
             "archived": archived}
 
 
+def _resolve_guild(query, raid, cur_do):
+    """団名またはIDを団IDに解決する。同名団が複数なら候補一覧を返す(呼び出し側で判定)。
+    観戦(api_watch)・ライブ・サーチで同じ考え方を使い回す"""
+    query = (query or "").strip()
+    if not query:
+        return None, None, None   # gid, name, candidates
+    if re.fullmatch(r"\d{3,9}", query):
+        gid = int(query)
+        rows = guild_histories(gid)
+        name = rows[0].get("name", query) if rows else query
+        return gid, name, None
+    exacts, partial = search_guild_by_name(query)
+    cand_src = exacts if exacts else partial
+    if len(cand_src) > 1:
+        cands = []
+        for g in cand_src:
+            gh = guild_histories(g["guild_id"])
+            cands.append({"gid": g["guild_id"], "name": g["name"],
+                          "prev": prev_contrib(gh, raid, cur_do), "rank": raid_final_rank(gh, raid)})
+        cands.sort(key=lambda c: (c["prev"] is None, c["rank"] is None, c["rank"] or 0))
+        return None, None, cands
+    if cand_src:
+        return cand_src[0]["guild_id"], cand_src[0]["name"], None
+    return None, None, []   # 空リスト=見つからなかった(candidatesと区別)
+
+
+def api_watch(q):
+    """観戦: 霞桜団を介さず、任意の2団の本戦当日ぶん貢献度・時速・総合順位を比較する。
+    ライブタブと同じ hourly_series/day_base をそのまま使い回す(計算ロジックは同じ)"""
+    raid = raid_arg(q) or meta_for()["raid"]
+    m = meta_for(raid)
+    battle = [s for s in m["schedules"] if s.get("day_of", 0) >= 4]
+    date = (q.get("date", [None])[0] or "").strip()
+    if not date:
+        date = battle[-1]["day"] if battle else time.strftime("%Y-%m-%d")
+    cur_do = next((s["day_of"] for s in m["schedules"] if s["day"] == date), 7)
+    day_label = {s["day"]: f"本戦{s['day_of'] - 3}日目" for s in battle}
+
+    a_q = (q.get("a", [""])[0] or "").strip()
+    b_q = (q.get("b", [""])[0] or "").strip()
+    if not (a_q and b_q):
+        return {"error": "2つの団名または団IDを入力してください"}
+
+    gid_a, name_a, cand_a = _resolve_guild(a_q, raid, cur_do)
+    if cand_a is not None:
+        if not cand_a:
+            return {"error": f"「{a_q}」が見つかりません。団名を正確に入力するか、団IDで指定してください"}
+        return {"candidates": cand_a, "which": "a", "prev_label": f"本戦{cur_do - 4}日目" if cur_do >= 4 else "予選(計)"}
+    gid_b, name_b, cand_b = _resolve_guild(b_q, raid, cur_do)
+    if cand_b is not None:
+        if not cand_b:
+            return {"error": f"「{b_q}」が見つかりません。団名を正確に入力するか、団IDで指定してください"}
+        return {"candidates": cand_b, "which": "b", "prev_label": f"本戦{cur_do - 4}日目" if cur_do >= 4 else "予選(計)"}
+
+    hist_a, hist_b = guild_histories(gid_a), guild_histories(gid_b)
+
+    def hint_for(rows, d, default):
+        days = sorted([(r["day"], r["rank"]) for r in rows if r["raid_number"] == raid])
+        prev = [rk for dy, rk in days if dy < d]
+        same = [rk for dy, rk in days if dy == d]
+        return same[0] if same else (prev[-1] if prev else default)
+
+    base_a = day_base(hist_a, raid, date)
+    base_b = day_base(hist_b, raid, date)
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        fa = ex.submit(hourly_series, raid, date, base_a, gid_a, hint_for(hist_a, date, 300), True)
+        fb = ex.submit(hourly_series, raid, date, base_b, gid_b, hint_for(hist_b, date, 300), True)
+        (ser_a, rank_a), (ser_b, rank_b) = fa.result(), fb.result()
+    sp_a, sp_b = _speeds(ser_a), _speeds(ser_b)
+    common = [t for t in HOURS if t in ser_a and t in ser_b]
+    last = common[-1] if common else None
+
+    def peak(sp):
+        vals = {t: v for t, v in sp.items() if v is not None}
+        return max(vals.items(), key=lambda kv: kv[1]) if vals else (None, None)
+
+    pk_a, pk_b = peak(sp_a), peak(sp_b)
+    return {"raid": raid, "date": date, "label": day_label.get(date, date), "hours": HOURS,
+            "a": {"gid": gid_a, "name": name_a, "cum": ser_a, "speed": sp_a, "rank": rank_a,
+                  "peak": pk_a[1], "peak_time": pk_a[0]},
+            "b": {"gid": gid_b, "name": name_b, "cum": ser_b, "speed": sp_b, "rank": rank_b,
+                  "peak": pk_b[1], "peak_time": pk_b[0]},
+            "lead": (round(ser_a[last] - ser_b[last], 1) if last else None),
+            "last": last}
+
+
 def api_scout(q):
     query = (q.get("q", [""])[0] or "").strip()
     if not query:
@@ -2317,7 +2403,7 @@ def api_opponent(data):
 ROUTES = {"/api/config": api_config, "/api/live": api_live,
           "/api/scout": api_scout, "/api/yosen": api_yosen, "/api/koran": api_koran,
           "/api/scout_speed": api_scout_speed, "/api/koran_all": api_koran_all,
-          "/api/active": api_active}
+          "/api/active": api_active, "/api/watch": api_watch}
 
 
 class Handler(BaseHTTPRequestHandler):
