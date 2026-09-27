@@ -1492,6 +1492,12 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
     前後から補間して狭い範囲だけ見る。全時刻を広く走査するより無駄が減り、並列も保てる。"""
     b = user_border_hourly(raid, date)
     b2000, b100k = b.get(2000, {}), b.get(100000, {})
+    # gbfdataが遅れて始まった予選の早い時間帯(第84回は20・21時)を、保存済みの
+    # 個人アーカイブで補う。値は確定済みで変わらないため無条件に上書きしてよい
+    gr = {k.split(" ", 1)[1]: v for k, v in koran_gr_get(raid).items() if k.startswith(date + " ")}
+    for t, row in gr.items():
+        if "b2000" in row:
+            b2000[t] = row["b2000"]
     times = sorted(set(b2000) | set(b100k), key=lambda t: int(t.split(":")[0]))
     # 本戦(day_of 4〜7)は7〜24時が稼働時間。24時以降は貢献度に反映されないので走査しない
     if day_of and day_of >= 4:
@@ -1519,6 +1525,10 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
     direct = user_hourly_points(raid, uid)
     for i, t in enumerate(times):
         got = (direct or {}).get(date, {}).get(t)
+        if not got:                          # gbfdataに無い時刻はアーカイブで補う
+            v = gr.get(t, {}).get(str(uid))
+            if v:
+                got = tuple(v)
         if got:
             p_cum[t], p_rank[t] = got
             found[i] = got[1]
@@ -1935,6 +1945,15 @@ def koran_yosen_series(raid, uid, hint=3000, pad=False):
     for date in (d1, d2):
         for t, (cum, rank) in (hp.get(date) or {}).items():
             p_cum[f"{date} {t}"], p_rank[f"{date} {t}"] = cum, rank
+    # gbfdataが遅れて始まった早い時間帯(第84回は20・21時)を保存済みアーカイブで補う。
+    # 10万位はgbfranking(上位1万人まで)にも無いため対象外(英雄ラインと本人のみ)
+    if pad:
+        for k, row in koran_gr_get(raid).items():
+            if "b2000" in row and k not in b2000:
+                b2000[k] = row["b2000"]
+            v = row.get(str(uid))
+            if v and k not in p_cum:
+                p_cum[k], p_rank[k] = v[0], v[1]
     if not (p_cum or b2000 or b100k):
         return None
     keys = set(p_cum) | set(b2000) | set(b100k)
@@ -2063,6 +2082,7 @@ GAS_SSID = os.environ.get("GAS_SSID", "")
 GAS_SHEET = os.environ.get("GAS_SHEET", "撤退")
 GAS_CELL_OPP = os.environ.get("GAS_CELL_OPP", "A2")   # 対戦相手の保存先
 GAS_CELL_LOG = os.environ.get("GAS_CELL_LOG", "A3")   # 本戦の毎時ログ(同じタブの別セル)
+GAS_CELL_KORAN = os.environ.get("GAS_CELL_KORAN", "A4")   # 個ランの予選早期アーカイブ(こらんアプリと共用)
 GAS_TTL = 60                          # スプレッドシートを読み直す間隔(秒)
 # 対戦相手。本戦は1日1試合なのでキーは「開催回|日付」
 _opp = {"at": 0.0, "map": None}       # map: {"83|2026-06-24": {"gid":..,"name":..}}
@@ -2085,6 +2105,32 @@ def _gas(payload, timeout=25):
         return json.load(urllib.request.urlopen(req, timeout=timeout))
     except Exception:
         return None
+
+
+_koran_gr_cache = {}
+_koran_gr_lock = threading.Lock()
+
+
+def koran_gr_get(raid):
+    """個ランの予選早期(gbfdata未収録の20・21時など)を補う個人アーカイブ。
+    別セッションで一度だけgbfrankingから抽出・保存した小さいJSON(団員DBの
+    「撤退」タブA4、こらんアプリと共用)を読むだけ。読み取り専用・値は確定済みで
+    変わらないためプロセス内キャッシュを無期限に使い回してよい"""
+    with _koran_gr_lock:
+        if raid in _koran_gr_cache:
+            return _koran_gr_cache[raid]
+    out = {}
+    try:
+        d = _gas({"read": f"{GAS_CELL_KORAN}:{GAS_CELL_KORAN}"})
+        raw = ((d or {}).get("values") or [[""]])[0][0]
+        if isinstance(raw, str) and raw.strip().startswith("{"):
+            m = json.loads(raw)
+            out = m.get(f"{raid}|koran_gr") or {}
+    except Exception:
+        out = {}
+    with _koran_gr_lock:
+        _koran_gr_cache[raid] = out
+    return out
 
 
 def opp_map():
