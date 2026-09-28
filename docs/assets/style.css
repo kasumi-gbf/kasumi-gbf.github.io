@@ -80,10 +80,7 @@
   .sectlead{color:var(--mut);font-size:14.5px;margin-top:12px;max-width:56ch;}
 
   /* about */
-  .about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;margin-top:36px;align-items:start;}
-  @media (max-width:760px){ .about-grid{grid-template-columns:1fr;} }
-  .about-grid p{color:var(--ink);font-size:15px;}
-  .pillars{display:flex;flex-direction:column;gap:14px;}
+  .pillars{display:flex;flex-direction:column;gap:14px;margin-top:32px;max-width:720px;}
   .pillar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
   .pillar .t{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;}
   .pillar .t .n{font-family:var(--font-d);color:var(--sakura);font-size:13px;}
