@@ -9,14 +9,14 @@
 
 ## GitHub Pagesで公開する手順（無料）
 
-リポジトリ名を `masama1019-hash.github.io` にしているため、GitHubのユーザー/組織ページとして
-`https://masama1019-hash.github.io/` にそのまま公開されます。
+リポジトリ名を `kasumi-gbf.github.io` にしているため、GitHubのユーザー/組織ページとして
+`https://kasumi-gbf.github.io/` にそのまま公開されます。
 
 1. このリポジトリの GitHub ページを開く
 2. 上部メニュー **Settings → Pages** を開く
 3. 「Build and deployment」の **Source** を `Deploy from a branch` にする
 4. **Branch** で `main` を選び、フォルダは `/docs` を選択 → Save
-5. 数分後、`https://masama1019-hash.github.io/` で公開されます
+5. 数分後、`https://kasumi-gbf.github.io/` で公開されます
 
 ## ローカルで確認する
 
