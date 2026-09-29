@@ -207,19 +207,20 @@ def _gas_read(rng):
 
 def koran_archive_get(raid):
     """{"HH:00"相当キー: {"b2000":億, "<uid>":[億,順位], ...}} または {}(未保存/失敗時)。
-    プロセス内キャッシュのみ(値は確定済みで変わらないため無期限に使い回してよい)"""
+    プロセス内キャッシュのみ(値は確定済みで変わらないため無期限に使い回してよい)。
+    読めなかったときは覚えない(空を掴むと再起動まで予選序盤が欠けたままになる)"""
     with _gr_archive_lock:
         if raid in _gr_archive_cache:
             return _gr_archive_cache[raid]
-    out = {}
     try:
         d = _gas_read(f"{GAS_CELL_KORAN}:{GAS_CELL_KORAN}")
-        raw = ((d or {}).get("values") or [[""]])[0][0]
-        if isinstance(raw, str) and raw.strip().startswith("{"):
-            m = json.loads(raw)
-            out = m.get(f"{raid}|koran_gr") or {}
+        if not (d and d.get("status") == "ok"):
+            return {}
+        raw = ((d.get("values") or [[""]])[0] or [""])[0]
+        m = json.loads(raw) if isinstance(raw, str) and raw.strip().startswith("{") else {}
+        out = m.get(f"{raid}|koran_gr") or {}
     except Exception:
-        out = {}
+        return {}
     with _gr_archive_lock:
         _gr_archive_cache[raid] = out
     return out
