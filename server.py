@@ -2659,6 +2659,11 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
+    def end_headers(self):
+        # 対戦相手の団に見つかりにくいよう、検索エンジンに載せない(APIの応答も含めて全部)
+        self.send_header("X-Robots-Tag", "noindex, nofollow, noarchive")
+        super().end_headers()
+
     def _json(self, obj, code=200):
         body = json.dumps(obj, ensure_ascii=False).encode()
         self.send_response(code)

@@ -444,6 +444,11 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
+    def end_headers(self):
+        # 検索エンジンに載せない(本体アプリ・HPと同じ方針)
+        self.send_header("X-Robots-Tag", "noindex, nofollow, noarchive")
+        super().end_headers()
+
     def _send(self, body, ctype, code=200):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
