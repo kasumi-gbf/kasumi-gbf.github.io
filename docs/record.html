@@ -149,37 +149,41 @@
 <section id="medals">
   <div class="wrap">
     <div class="kicker">Medals</div>
-    <h2 class="h2">勲章取得数について</h2>
-    <p class="sectlead">古戦場で入手できる勲章は、条件をすべて満たすと最大525個です（GameWith調べ）。</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px;margin-top:28px;">
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;box-sizing:border-box;">
-        <div style="font-size:14px;font-weight:700;color:var(--sakura);margin-bottom:12px;">予選</div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7;">
-          団貢献度45,000<br>個人貢献度25,000<br><span style="color:var(--mut);font-size:12px;">→ 30個</span>
-        </div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7;margin-top:14px;">
-          団ランキング 1〜300位<br><span style="color:var(--mut);font-size:12px;">→ 45個</span>
-        </div>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13.5px;font-weight:700;color:var(--ink);">小計　75個</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;box-sizing:border-box;">
-        <div style="font-size:14px;font-weight:700;color:var(--mint);margin-bottom:12px;">本戦</div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7;">
-          A帯全勝（10億以上）×4日<br><span style="color:var(--mut);font-size:12px;">→ 70個×4＝280個</span>
-        </div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7;margin-top:14px;">
-          SPバトル 総合団順位 1〜2000位<br><span style="color:var(--mut);font-size:12px;">→ 70個</span>
-        </div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7;margin-top:14px;">
-          個人ランキング 1〜90000位<br><span style="color:var(--mut);font-size:12px;">→ 100個</span>
-        </div>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13.5px;font-weight:700;color:var(--ink);">小計　450個</div>
-      </div>
+    <h2 class="h2" style="display:flex;align-items:center;gap:10px;">
+      <svg width="30" height="30" viewBox="0 0 40 40" style="flex-shrink:0;">
+        <path d="M12 2 L20 20 L10 20 Z" fill="var(--sakura)"/>
+        <path d="M28 2 L30 20 L20 20 Z" fill="var(--mint)"/>
+        <circle cx="20" cy="26" r="12" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="2"/>
+        <circle cx="20" cy="26" r="7.5" fill="none" stroke="var(--gold)" stroke-width="1.6"/>
+        <path d="M20 21.5 L21.4 24.6 L24.8 25 L22.3 27.3 L23 30.6 L20 28.9 L17 30.6 L17.7 27.3 L15.2 25 L18.6 24.6 Z" fill="var(--gold)"/>
+      </svg>
+      勲章取得数について
+    </h2>
+    <p class="sectlead">古戦場で入手できる勲章は、条件をすべて満たすと最大525個です。特に差が出やすいのが「予選300位以内に入れたか」と「本戦で何勝できたか」。この2軸で合計数がどう変わるかを比較してみます。</p>
+
+    <div style="max-width:640px;margin-top:24px;overflow-x:auto;">
+      <table class="perf" style="min-width:420px;">
+        <thead>
+          <tr>
+            <th>本戦成績</th>
+            <th>予選300位以内</th>
+            <th>予選300位圏外</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>4勝0敗</td><td style="font-weight:700;color:var(--ink);">525個</td><td>480個</td></tr>
+          <tr><td>3勝1敗</td><td style="font-weight:700;color:var(--ink);">455個</td><td>410個</td></tr>
+          <tr><td>2勝2敗</td><td style="font-weight:700;color:var(--ink);">385個</td><td>340個</td></tr>
+          <tr><td>1勝3敗</td><td style="font-weight:700;color:var(--ink);">315個</td><td>270個</td></tr>
+          <tr><td>0勝4敗</td><td style="font-weight:700;color:var(--ink);">245個</td><td>200個</td></tr>
+        </tbody>
+      </table>
     </div>
-    <div style="max-width:640px;margin-top:16px;text-align:center;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;padding:12px;font-size:15px;font-weight:700;color:#7a5c28;box-sizing:border-box;">合計　最大 525個</div>
+
     <p style="color:var(--mut);font-size:12px;max-width:640px;margin-top:14px;line-height:1.7;">
+      ※予選300位以内は「団貢献度45,000／個人貢献度25,000」到達分（30個）＋「団ランキング1〜300位」分（45個）を、圏外は到達分（30個）のみを計上。本戦は「A帯全勝（10億以上）」を1勝＝70個として勝利数分を積み上げ。どちらも「SPバトル総合団順位1〜2000位」（70個）と「個人ランキング1〜90000位」（100個）は達成している前提の目安です。<br>
       ※個人ランキング報酬の対象は「1〜90000位」です。団の目標である「個人10万位以内」とは基準が異なるのでご注意ください。<br>
-      ※条件・入手数は公式に近い一般的な目安（GameWith調べ）で、開催回により変動する場合があります。
+      ※条件・入手数は公式に近い一般的な目安で、開催回により変動する場合があります。
     </p>
   </div>
 </section>
