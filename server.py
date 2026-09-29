@@ -2203,19 +2203,21 @@ def koran_gr_get(raid):
     """個ランの予選早期(gbfdata未収録の20・21時など)を補う個人アーカイブ。
     別セッションで一度だけgbfrankingから抽出・保存した小さいJSON(団員DBの
     「撤退」タブA4、こらんアプリと共用)を読むだけ。読み取り専用・値は確定済みで
-    変わらないためプロセス内キャッシュを無期限に使い回してよい"""
+    変わらないためプロセス内キャッシュを無期限に使い回してよい。
+    ただし読めなかったときは覚えない(起動直後のGAS遅延で空を掴むと、再起動まで
+    20・21時が出なくなっていた。2026-09-30)"""
     with _koran_gr_lock:
         if raid in _koran_gr_cache:
             return _koran_gr_cache[raid]
-    out = {}
     try:
         d = _gas({"read": f"{GAS_CELL_KORAN}:{GAS_CELL_KORAN}"})
-        raw = ((d or {}).get("values") or [[""]])[0][0]
-        if isinstance(raw, str) and raw.strip().startswith("{"):
-            m = json.loads(raw)
-            out = m.get(f"{raid}|koran_gr") or {}
+        if not (d and d.get("status") == "ok"):
+            return {}
+        raw = ((d.get("values") or [[""]])[0] or [""])[0]
+        m = json.loads(raw) if isinstance(raw, str) and raw.strip().startswith("{") else {}
+        out = m.get(f"{raid}|koran_gr") or {}
     except Exception:
-        out = {}
+        return {}
     with _koran_gr_lock:
         _koran_gr_cache[raid] = out
     return out
