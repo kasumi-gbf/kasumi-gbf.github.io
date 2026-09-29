@@ -25,6 +25,12 @@
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.75;
     -webkit-font-smoothing:antialiased;}
+  /* 霞のにじみ。bodyに直接敷くとページの長さに引き伸ばされるので、画面に固定した層に描く
+     (background-attachment:fixed は iOS Safari で効かないため position:fixed を使う) */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:
+    radial-gradient(ellipse 60% 45% at 8% 12%, color-mix(in srgb, var(--sakura) 10%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 95% 40%, color-mix(in srgb, var(--mint) 9%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 30% 100%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 70%);}
   img{max-width:100%;}
   h1,h2,h3{font-family:var(--font-d);font-weight:700;letter-spacing:.02em;text-wrap:balance;margin:0;}
   a{color:inherit;}
