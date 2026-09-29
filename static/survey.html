@@ -68,6 +68,8 @@ details.admin summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--
 .status{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:12.5px;padding:8px 14px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center;}
 .status.show{opacity:.94;}
 .status.err{background:#c0392b;color:#fff;}
+/* iPhoneは16px未満の入力欄をタップすると画面が拡大されるので、スマホでは16pxにする */
+@media (max-width:640px){ select,input,textarea{font-size:16px !important;} }
 </style>
 </head>
 <body>
