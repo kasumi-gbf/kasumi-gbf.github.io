@@ -81,39 +81,43 @@
   <div class="wrap">
     <div class="kicker">Matching</div>
     <h2 class="h2">本戦のマッチングについて</h2>
-    <p class="sectlead">対戦相手がどう決まるか、仕組みをご紹介します。</p>
-    <div style="max-width:640px;margin-top:28px;">
+    <p class="sectlead">対戦相手がどう決まるか、過去実績を踏まえた推測です。</p>
+    <div style="max-width:640px;margin-top:28px;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;padding:10px 16px;">
+      <p style="margin:0;font-size:12.5px;color:#7a5c28;">※ここから先は公式仕様ではなく、過去実績を含めた勝手な妄想です。</p>
+    </div>
+    <div style="max-width:640px;margin-top:20px;">
       <svg viewBox="0 0 640 235" style="width:100%;height:auto;" aria-hidden="true">
         <defs>
           <marker id="mt-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--mint)"/></marker>
         </defs>
-        <rect x="232" y="14" width="120" height="40" rx="8" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.5"/>
-        <text x="292" y="39" text-anchor="middle" font-size="13" font-weight="700" fill="#7a5c28">予選 団順位</text>
-        <line x1="255" y1="56" x2="82" y2="106" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow)"/>
-        <line x1="330" y1="56" x2="503" y2="106" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow)"/>
+        <rect x="212" y="14" width="160" height="40" rx="8" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.5"/>
+        <text x="292" y="39" text-anchor="middle" font-size="12" font-weight="700" fill="#7a5c28">順位帯グループ（例:1000位刻み）</text>
+        <line x1="245" y1="56" x2="82" y2="106" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow)"/>
+        <line x1="340" y1="56" x2="503" y2="106" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow)"/>
         <line x1="130" y1="135" x2="163" y2="135" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow)"/>
-        <text x="147" y="122" text-anchor="middle" font-size="10" fill="var(--mint)">前日の<tspan x="147" dy="11">貢献度</tspan></text>
+        <text x="147" y="122" text-anchor="middle" font-size="10" fill="var(--mint)">前日順位<tspan x="147" dy="11">±50</tspan></text>
         <line x1="275" y1="135" x2="308" y2="135" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow)"/>
-        <text x="292" y="122" text-anchor="middle" font-size="10" fill="var(--mint)">前日の<tspan x="292" dy="11">貢献度</tspan></text>
+        <text x="292" y="122" text-anchor="middle" font-size="10" fill="var(--mint)">前日順位<tspan x="292" dy="11">±50</tspan></text>
         <rect x="20" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
         <text x="75" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦1日目</text>
-        <text x="75" y="150" text-anchor="middle" font-size="10" fill="var(--gold)">予選順位ベース</text>
+        <text x="75" y="150" text-anchor="middle" font-size="10" fill="var(--gold)">順位帯ランダム</text>
         <rect x="165" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
         <text x="220" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦2日目</text>
-        <text x="220" y="150" text-anchor="middle" font-size="10" fill="var(--mint)">前日貢献度ベース</text>
+        <text x="220" y="150" text-anchor="middle" font-size="10" fill="var(--mint)">前日順位±50</text>
         <rect x="310" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
         <text x="365" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦3日目</text>
-        <text x="365" y="150" text-anchor="middle" font-size="10" fill="var(--mint)">前日貢献度ベース</text>
+        <text x="365" y="150" text-anchor="middle" font-size="10" fill="var(--mint)">前日順位±50</text>
         <rect x="455" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
         <text x="510" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦4日目</text>
-        <text x="510" y="150" text-anchor="middle" font-size="10" fill="var(--gold)">予選順位ベース</text>
-        <text x="292" y="202" text-anchor="middle" font-size="12" fill="var(--mut)">3日目の結果は4日目には引き継がれません（予選順位ベースに戻ります）</text>
+        <text x="510" y="150" text-anchor="middle" font-size="10" fill="var(--gold)">順位帯ランダム</text>
+        <text x="292" y="202" text-anchor="middle" font-size="12" fill="var(--mut)">4日目は3日目の結果を引き継がず、1日目と同じ順位帯ランダムに戻ります</text>
       </svg>
     </div>
     <p style="color:var(--ink);font-size:15px;max-width:640px;margin-top:20px;line-height:1.9">
-      <b>本戦1日目・4日目</b>は、予選期間中の団総合順位をもとにした大枠でマッチングが決まります。<br>
-      <b>本戦2日目・3日目</b>は、前日にどれだけ貢献度を稼いだかによって、近い実力の団同士がマッチングされます。<br><br>
-      そのため、初日に無理をして稼ぎすぎると、翌日以降により強い相手と当たりやすくなる点には注意が必要です。逆に、苦しい相手と連日当たってしまった場合も、4日目は予選順位ベースに戻るため、そこでリセットされます。
+      <b>本戦1日目</b>は、ある程度の貢献度枠（順位帯）の中でランダムにマッチングされるようです。<br>
+      例えばAクラスの場合、1〜1000位・1001〜2000位・2001〜3000位…といった枠の中でのランダム対戦と考えられます。<br><br>
+      <b>本戦2日目・3日目</b>は前日貢献度マッチングで、前日順位の<b>±50位以内</b>の団同士が対戦する傾向があります。<br><br>
+      <b>本戦4日目</b>は、1日目と同様の順位帯ランダムマッチングに戻ります。
     </p>
   </div>
 </section>
