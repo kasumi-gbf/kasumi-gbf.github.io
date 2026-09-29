@@ -36,13 +36,16 @@
     background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line);}
   .navrow{display:flex;align-items:center;justify-content:space-between;padding-block:12px;gap:16px;}
-  .brand{display:flex;align-items:center;gap:8px;font-family:var(--font-d);font-weight:700;font-size:17px;}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--font-d);font-weight:700;font-size:17px;white-space:nowrap;}
   svg.mk{width:22px;height:22px;flex-shrink:0;}
   nav.links{display:flex;gap:22px;font-size:13.5px;color:var(--mut);}
-  nav.links a{text-decoration:none;transition:color .15s;}
+  nav.links a{text-decoration:none;transition:color .15s;white-space:nowrap;}
   nav.links a:hover{color:var(--sakura);}
   nav.links a.active{color:var(--sakura);font-weight:700;}
-  @media (max-width:640px){ nav.links{gap:13px;font-size:12px;} }
+  @media (max-width:760px){
+    .navrow{flex-wrap:wrap;row-gap:8px;padding-block:10px;}
+    nav.links{width:100%;gap:14px;font-size:12px;overflow-x:auto;}
+  }
 
   /* ---- hero ---- */
   .hero{position:relative;background-image:

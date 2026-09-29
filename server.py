@@ -2400,10 +2400,195 @@ def api_opponent(data):
             "persisted": bool(saved and saved.get("status") == "ok")}, 200
 
 
+# ---------------------------------------------------------------------------
+# 高難易度ボード・アンケート(団員がログインなしで書き込む共有データ)
+# 撤退タブの1セルにJSONを丸ごと置く(1セル5万文字まで)。書き込むのはこのサーバ1台
+# だけなので、ロック内で「読む→変える→保存」すれば同時書き込みでも取りこぼさない。
+# 団員名は団員シートのDBタブA列から読むので、公開リポジトリには名前を書かない。
+# ---------------------------------------------------------------------------
+GAS_CELL_BOARD = os.environ.get("GAS_CELL_BOARD", "A5")
+GAS_CELL_SURVEY = os.environ.get("GAS_CELL_SURVEY", "A6")
+MEMBER_SHEET = os.environ.get("MEMBER_SHEET", "DB")
+MEMBER_RANGE = os.environ.get("MEMBER_RANGE", "A3:A80")
+MEMBER_TTL = 600
+BLOB_LIMIT = 45000
+QUESTS = ("versa", "luci", "tengen")
+ATTRS = ("fire", "water", "earth", "wind", "dark", "light")
+_members = {"at": 0.0, "list": None}
+_members_lock = threading.Lock()
+
+
+def member_list():
+    now = time.time()
+    with _members_lock:
+        if _members["list"] is not None and now - _members["at"] < MEMBER_TTL:
+            return _members["list"]
+    d = _gas({"sheet": MEMBER_SHEET, "read": MEMBER_RANGE})
+    names = []
+    if d and d.get("status") == "ok":
+        for row in d.get("values") or []:
+            v = str((row or [""])[0]).strip()
+            if v == "合計":
+                break
+            if v and v not in names:
+                names.append(v)
+    with _members_lock:
+        if not names and _members["list"] is not None:
+            return _members["list"]
+        _members["list"], _members["at"] = names, now
+        return names
+
+
+class _Blob:
+    def __init__(self, cell):
+        self.cell, self.data, self.at = cell, None, 0.0
+        self.lock = threading.Lock()
+
+    def _load(self):
+        if self.data is not None and time.time() - self.at < GAS_TTL:
+            return self.data
+        d = _gas({"read": f"{self.cell}:{self.cell}"})
+        if not (d and d.get("status") == "ok"):
+            if self.data is not None:
+                return self.data
+            raise RuntimeError("保存先に接続できませんでした。時間をおいて再度お試しください")
+        raw = ((d.get("values") or [[""]])[0] or [""])[0]
+        # 壊れたJSONを空として扱うと次の保存で全データが消えるので、読めなければ止める
+        m = json.loads(raw) if isinstance(raw, str) and raw.strip() else {}
+        self.data, self.at = m, time.time()
+        return m
+
+    def get(self):
+        with self.lock:
+            return self._load()
+
+    def update(self, fn):
+        with self.lock:
+            m = json.loads(json.dumps(self._load()))
+            fn(m)
+            s = json.dumps(m, ensure_ascii=False, separators=(",", ":"))
+            if len(s) > BLOB_LIMIT:
+                raise ValueError("保存容量の上限に達しました。古いアンケートを削除してください")
+            saved = _gas({"cell": self.cell, "value": s})
+            if not (saved and saved.get("status") == "ok"):
+                raise RuntimeError("保存に失敗しました。時間をおいて再度お試しください")
+            self.data, self.at = m, time.time()
+            return m
+
+
+_board = _Blob(GAS_CELL_BOARD)
+_survey = _Blob(GAS_CELL_SURVEY)
+
+
+def _now_iso():
+    return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%dT%H:%M")
+
+
+def _text(v, limit):
+    s = str(v or "").strip()
+    if len(s) > limit:
+        raise ValueError(f"{limit}文字以内で入力してください")
+    return s
+
+
+def api_board(q):
+    return {"members": member_list(), "board": _board.get()}
+
+
+def api_board_post(data):
+    quest = data.get("quest")
+    if quest not in QUESTS:
+        return {"error": "クエストが不正です"}, 400
+    if "schedule" in data:
+        date = _text(data.get("schedule"), 60)
+
+        def fn(m):
+            m.setdefault("s", {})[quest] = date
+    else:
+        attr = data.get("attr")
+        if attr not in ATTRS:
+            return {"error": "属性が不正です"}, 400
+        name, memo = _text(data.get("name"), 30), _text(data.get("memo"), 80)
+
+        def fn(m):
+            e = m.setdefault("e", {})
+            if name or memo:
+                e[f"{quest}|{attr}"] = {"n": name, "m": memo, "t": _now_iso()}
+            else:
+                e.pop(f"{quest}|{attr}", None)
+    return {"status": "ok", "board": _board.update(fn)}, 200
+
+
+def api_surveys(q):
+    return {"members": member_list(), "surveys": _survey.get().get("list", [])}
+
+
+def _find_survey(m, sid):
+    for s in m.get("list", []):
+        if s.get("id") == sid:
+            return s
+    raise LookupError("アンケートが見つかりません")
+
+
+def api_survey_vote(data):
+    sid, member = str(data.get("id") or ""), _text(data.get("member"), 30)
+    if member not in member_list():
+        return {"error": "団員名をリストから選んでください"}, 400
+    comment = _text(data.get("comment"), 200)
+    choices = data.get("choices") or []
+    if not isinstance(choices, list):
+        return {"error": "選択肢が不正です"}, 400
+
+    def fn(m):
+        s = _find_survey(m, sid)
+        if s.get("closed"):
+            raise PermissionError("このアンケートは締め切られています")
+        n = len(s.get("options", []))
+        picked = sorted({int(c) for c in choices if isinstance(c, int) and 0 <= c < n})
+        if not s.get("multi") and len(picked) > 1:
+            raise ValueError("選択肢は1つだけ選んでください")
+        votes = s.setdefault("votes", {})
+        if picked or comment:
+            votes[member] = {"c": picked, "m": comment, "t": _now_iso()}
+        else:
+            votes.pop(member, None)
+    return {"status": "ok", "surveys": _survey.update(fn).get("list", [])}, 200
+
+
+def api_survey_admin(data):
+    if not RETREAT_PW:
+        return {"error": "サーバにパスワードが設定されていません（環境変数 RETREAT_PW）"}, 503
+    if not hmac.compare_digest(str(data.get("pw", "")), RETREAT_PW):
+        return {"error": "パスワードが違います"}, 403
+    action, sid = data.get("action"), str(data.get("id") or "")
+    if action == "create":
+        title, desc = _text(data.get("title"), 80), _text(data.get("desc"), 400)
+        opts = [_text(o, 60) for o in (data.get("options") or []) if str(o or "").strip()]
+        if not title or not 2 <= len(opts) <= 10:
+            return {"error": "タイトルと2〜10個の選択肢を入力してください"}, 400
+        new = {"id": format(int(time.time() * 1000), "x"), "title": title, "desc": desc,
+               "options": opts, "multi": bool(data.get("multi")), "closed": False,
+               "created": _now_iso(), "votes": {}}
+
+        def fn(m):
+            m.setdefault("list", []).insert(0, new)
+    elif action in ("close", "reopen"):
+        def fn(m):
+            _find_survey(m, sid)["closed"] = action == "close"
+    elif action == "delete":
+        def fn(m):
+            _find_survey(m, sid)
+            m["list"] = [s for s in m["list"] if s.get("id") != sid]
+    else:
+        return {"error": "操作が不正です"}, 400
+    return {"status": "ok", "surveys": _survey.update(fn).get("list", [])}, 200
+
+
 ROUTES = {"/api/config": api_config, "/api/live": api_live,
           "/api/scout": api_scout, "/api/yosen": api_yosen, "/api/koran": api_koran,
           "/api/scout_speed": api_scout_speed, "/api/koran_all": api_koran_all,
-          "/api/active": api_active, "/api/watch": api_watch}
+          "/api/active": api_active, "/api/watch": api_watch,
+          "/api/board": api_board, "/api/surveys": api_surveys}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -2422,22 +2607,29 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    POSTS = {"/api/opponent": "opponent"}
+    POSTS = {"/api/opponent": api_opponent, "/api/board": api_board_post,
+             "/api/survey_vote": api_survey_vote, "/api/survey_admin": api_survey_admin}
 
     def do_POST(self):
-        kind = self.POSTS.get(urllib.parse.urlparse(self.path).path)
-        if not kind:
+        handler = self.POSTS.get(urllib.parse.urlparse(self.path).path)
+        if not handler:
             self._json({"error": "not found"}, 404)
             return
         try:
             n = int(self.headers.get("Content-Length") or 0)
-            if n > 4096:                       # パスワードと数語しか来ないので上限を切る
+            if n > 4096:                       # 1回の送信は数十〜数百文字なので上限を切る
                 self._json({"error": "too large"}, 413)
                 return
             data = json.loads(self.rfile.read(n) or b"{}")
             if not isinstance(data, dict):
                 data = {}
-            body, code = api_opponent(data)
+            body, code = handler(data)
+        except (ValueError, TypeError) as e:
+            body, code = {"error": str(e)}, 400
+        except PermissionError as e:
+            body, code = {"error": str(e)}, 403
+        except LookupError as e:
+            body, code = {"error": str(e)}, 404
         except Exception as e:
             body, code = {"error": str(e)}, 500
         self._json(body, code)
