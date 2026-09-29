@@ -83,6 +83,23 @@
   /* ---- sections ---- */
   section{padding-block:64px;}
   section+section{border-top:1px solid var(--line);}
+  /* 団コンセプト(団案内の上) */
+  #concept{text-align:center;}
+  .concept-copy{font-family:var(--font-d);font-weight:800;font-size:clamp(24px,4.4vw,38px);letter-spacing:.04em;
+    line-height:1.4;margin:10px 0 14px;text-wrap:balance;}
+  .concept-body{color:var(--mut);font-size:14.5px;max-width:38em;margin:0 auto;text-wrap:pretty;}
+  .cstats{display:flex;justify-content:center;gap:16px clamp(20px,5vw,52px);flex-wrap:wrap;margin-top:28px;}
+  .cstats .num{font-family:var(--font-d);font-weight:700;color:var(--sakura);font-size:clamp(30px,6vw,40px);line-height:1;
+    font-variant-numeric:tabular-nums;}
+  .cstats .num small{font-family:var(--font-b);font-size:13px;font-weight:500;color:var(--mut);margin-left:3px;}
+  .cstats .lbl{font-size:12px;color:var(--mut);margin-top:8px;}
+  .concept-copy span{display:inline-block;}
+  @media (max-width:520px){
+    .cstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .cstats .num{font-size:28px;} .cstats .num small{font-size:11px;margin-left:1px;}
+    .cstats .lbl{font-size:11px;line-height:1.5;}
+    .cstats .since{display:block;}
+  }
   .kicker{font-size:12.5px;letter-spacing:.14em;color:var(--sakura);text-transform:uppercase;font-weight:700;}
   .h2{font-size:clamp(24px,4vw,32px);margin-top:8px;}
   .sectlead{color:var(--mut);font-size:14.5px;margin-top:12px;max-width:56ch;}
