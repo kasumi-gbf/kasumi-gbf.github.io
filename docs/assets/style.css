@@ -4,6 +4,7 @@
     --sakura:#d46a8f; --sakura-soft:#fbe6ee;
     --mint:#3f9d84; --mint-soft:#e4f5ef;
     --gold:#b98a3e; --gold-soft:#f6ecd7; --win:#2f8f66;
+    --data:#4a82bd; --data-top:#79a6d6; --data-bot:#35649a; --data-ink:#2f5f93;
     --font-d:"Shippori Mincho",serif; --font-b:"Noto Sans JP",-apple-system,sans-serif;
   }
   @media (prefers-color-scheme: dark){
@@ -13,6 +14,7 @@
       --sakura:#e88bab; --sakura-soft:#332229;
       --mint:#5cc2a4; --mint-soft:#17302a;
       --gold:#e0bd7c; --gold-soft:#332a17; --win:#5cba93;
+      --data:#4a82bd; --data-top:#79a6d6; --data-bot:#35649a; --data-ink:#8fbbe6;
     }
   }
   :root[data-theme="dark"]{
@@ -21,6 +23,7 @@
     --sakura:#e88bab; --sakura-soft:#332229;
     --mint:#5cc2a4; --mint-soft:#17302a;
     --gold:#e0bd7c; --gold-soft:#332a17; --win:#5cba93;
+    --data:#4a82bd; --data-top:#79a6d6; --data-bot:#35649a; --data-ink:#8fbbe6;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.75;
