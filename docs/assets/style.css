@@ -210,21 +210,6 @@
 
   footer{padding-block:30px;text-align:center;color:var(--mut);font-size:12px;border-top:1px solid var(--line);}
 
-  /* TOP絵の花びらがゆっくり舞う(assets/site.jsが.hero-fallを生成。動きを減らす設定では非表示) */
-.hero-fall{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
-.hero-fall i{position:absolute;top:-8%;width:14px;height:18px;border-radius:80% 0 80% 0;opacity:0;
-  background:var(--petal,#f6b3c9);animation:petal-fall var(--dur,18s) linear var(--delay,0s) infinite;}
-.hero[data-tod="night"] .hero-fall i{--petal:#ffc6da;box-shadow:0 0 8px rgba(255,190,215,.7);}
-.hero[data-tod="evening"] .hero-fall i{--petal:#ffd3dd;}
-@keyframes petal-fall{
-  0%{top:-8%;margin-left:0;rotate:0deg;opacity:0;}
-  10%{opacity:var(--op,.75);}
-  50%{margin-left:var(--sway,40px);rotate:200deg;}
-  90%{opacity:var(--op,.75);}
-  100%{top:106%;margin-left:calc(var(--sway,40px)*-.4);rotate:420deg;opacity:0;}}
-.heroin{z-index:1;}
-@media (prefers-reduced-motion:reduce){.hero-fall{display:none;}}
-
   /* ヘッダー: 最上部では透明、スクロールですりガラス。メニューは桜色の下線が中央から伸びる */
 header.nav{transition:background .35s,box-shadow .35s,border-color .35s;}
 header.nav.top{background:transparent;border-bottom-color:transparent;backdrop-filter:none;}
