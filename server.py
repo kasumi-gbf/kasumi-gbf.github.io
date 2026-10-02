@@ -1580,6 +1580,9 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
     前後から補間して狭い範囲だけ見る。全時刻を広く走査するより無駄が減り、並列も保てる。"""
     b = user_border_hourly(raid, date)
     b2000, b100k = b.get(2000, {}), b.get(100000, {})
+    # gbfdataがその時刻のスナップショットを持っているか。持っていない時刻(第84回予選
+    # 1日目の20・21時など)に本人が見つからないのは「稼ぎ0」ではなく「データ無し」
+    covered = set(b2000) | set(b100k)
     # gbfdataが遅れて始まった予選の早い時間帯(第84回は20・21時)を、保存済みの
     # 個人アーカイブで補う。値は確定済みで変わらないため無条件に上書きしてよい
     gr = {k.split(" ", 1)[1]: v for k, v in koran_gr_get(raid).items() if k.startswith(date + " ")}
@@ -1660,8 +1663,11 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
                 found[i] = r[1]
                 p_cum[times[i]], p_rank[times[i]] = r[0], r[1]
 
+    # gbfdataに無い時刻は探しても必ず空振りするので走査対象から外す
+    skip = {i for i, t in enumerate(times) if t not in covered}
+    found_or_skip = lambda i: i in found or i in skip
     anchors = [i for i in sorted({0, n - 1} | {round(n * k / 4) for k in (1, 2, 3)})
-               if 0 <= i < n and i not in found]
+               if 0 <= i < n and not found_or_skip(i)]
     if anchors:
         take(scan(anchors, 14))                    # ①アンカーは広めに
     # 履歴由来のhintが当てにならない人(1日で数万位動く中位以下)は、近傍探索を
@@ -1669,26 +1675,30 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
     # 総なめに切り替える(実測: 無駄な解析356ページ→大幅減)
     if len(found) < 2:
         take(sweep(anchors))
-    rest = [i for i in range(n) if i not in found]
+    rest = [i for i in range(n) if not found_or_skip(i)]
     if rest:
         take(scan(rest, 8))                        # ②近傍が近いぶんはこれで当たる
     # ③残りは総なめ。順位は1時間で数万位動くことがあり(急に伸ばすと順位が大幅に上がり、
     #   その後は他人に抜かれて下がっていく)、近傍からの補間では原理的に届かない。
     #   全時刻を総なめすると遅いので、まず数点だけ足場を作り、間は補間で埋める
-    rest = [i for i in range(n) if i not in found]
+    rest = [i for i in range(n) if not found_or_skip(i)]
     if rest:
         take(sweep(rest[::max(1, len(rest) // 4)]))
-        rest = [i for i in range(n) if i not in found]
+        rest = [i for i in range(n) if not found_or_skip(i)]
         if rest:
             take(scan(rest, 12))
-        rest = [i for i in range(n) if i not in found]
+        rest = [i for i in range(n) if not found_or_skip(i)]
         if rest:                                   # 最後の取り残しだけ総なめ
             take(sweep(rest))
 
     # 取れなかった時刻は「その1時間は稼ぎ0」として直前の値を引き継ぐ。
     # 実測がまだ無い先頭は base_cum(前日終了時点の累積。初日は0)で埋めて「—」を出さない
+    # ただしgbfdataにスナップショット自体が無い時刻は不明のまま「—」にする
+    # (0で埋めると、次の時刻に数時間ぶんの稼ぎが1時間の時速として出てしまう)
     last_c, last_r = base_cum, None
     for t in times:
+        if t not in p_cum and t not in covered:
+            continue
         if t in p_cum:
             last_c = p_cum[t]
         elif last_c is not None:
@@ -1705,8 +1715,10 @@ def koran_hourly(raid, date, uid, hint=3000, hint_start=None, day_of=None,
         sp, prev = {}, prev0
         for t in times:
             if t in cum:
-                sp[t] = round(cum[t] - prev, 1) if prev is not None else 0.0
+                sp[t] = round(cum[t] - prev, 1) if prev is not None else None
                 prev = cum[t]
+            else:
+                prev = None    # 直前の時刻が欠けている: 差分は数時間ぶんなので時速にしない
         return sp
 
     if day_of == 1 or not prev_date:       # イベント初日は0からの増分
@@ -2050,11 +2062,14 @@ def koran_yosen_series(raid, uid, hint=3000, pad=False):
     keys = sorted(keys, key=lambda k: (k.split(" ")[0], int(k.split(" ")[1].split(":")[0])))
 
     def spd(cum):
+        # 欠けた時刻の次は差分が数時間ぶんになるので時速を出さない(—)
         out, prev = {}, 0.0
         for k in keys:
             if k in cum:
-                out[k] = round(cum[k] - prev, 1)
+                out[k] = round(cum[k] - prev, 1) if prev is not None else None
                 prev = cum[k]
+            else:
+                prev = None
         return out
     return {"keys": keys, "labels": [hour_label(k.split(" ")[1]) for k in keys],
             "player": {"cum": p_cum, "rank": p_rank, "speed": spd(p_cum)},
