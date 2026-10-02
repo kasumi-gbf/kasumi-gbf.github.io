@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20261002d">
+<link rel="stylesheet" href="assets/style.css?v=20261002e">
 </head>
 <body>
 
@@ -105,98 +105,13 @@
       本戦のマッチングについて
     </h2>
     <p class="sectlead">対戦相手の決まり方について、過去実績からの推測です（公式仕様ではありません）。</p>
-    <div class="only-mob" style="max-width:360px;margin-top:20px;">
-      <svg viewBox="0 0 320 420" style="width:100%;height:auto;" aria-hidden="true">
-        <defs>
-          <marker id="mt-arrow-m" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--mint)"/></marker>
-          <marker id="mt-arrow-gold-m" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--gold)"/></marker>
-        </defs>
-        <rect x="40" y="8" width="240" height="38" rx="8" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.5"/>
-        <text x="160" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="#7a5c28">順位帯グループ（例:1000位刻み）</text>
-        <line x1="160" y1="46" x2="160" y2="76" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow-gold-m)"/>
-        <path d="M40 27 H20 V343 H64" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow-gold-m)"/>
-        <line x1="160" y1="126" x2="160" y2="156" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow-m)"/>
-        <line x1="160" y1="206" x2="160" y2="236" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow-m)"/>
-        <g font-size="14" font-weight="700" fill="var(--ink)" text-anchor="middle">
-          <rect x="70" y="80" width="180" height="46" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-          <text x="172" y="108">本戦1日目</text>
-          <rect x="70" y="160" width="180" height="46" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-          <text x="172" y="188">本戦2日目</text>
-          <rect x="70" y="240" width="180" height="46" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-          <text x="172" y="268">本戦3日目</text>
-          <rect x="70" y="320" width="180" height="46" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-          <text x="172" y="348">本戦4日目</text>
-        </g>
-        <g stroke-width="1.4">
-          <circle cx="98" cy="103" r="13" fill="var(--bg)" stroke="var(--gold)" stroke-width="2"/>
-          <rect x="92" y="97" width="12" height="12" rx="2.5" fill="none" stroke="var(--gold)"/>
-          <circle cx="95" cy="100" r="1.1" fill="var(--gold)"/><circle cx="98" cy="103" r="1.1" fill="var(--gold)"/><circle cx="101" cy="106" r="1.1" fill="var(--gold)"/>
-          <circle cx="98" cy="183" r="13" fill="var(--bg)" stroke="var(--mint)" stroke-width="2"/>
-          <line x1="98" y1="177" x2="98" y2="189" stroke="var(--mint)"/><line x1="92" y1="179" x2="104" y2="179" stroke="var(--mint)"/>
-          <circle cx="92" cy="179" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/><circle cx="104" cy="179" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/>
-          <circle cx="98" cy="263" r="13" fill="var(--bg)" stroke="var(--mint)" stroke-width="2"/>
-          <line x1="98" y1="257" x2="98" y2="269" stroke="var(--mint)"/><line x1="92" y1="259" x2="104" y2="259" stroke="var(--mint)"/>
-          <circle cx="92" cy="259" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/><circle cx="104" cy="259" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/>
-          <circle cx="98" cy="343" r="13" fill="var(--bg)" stroke="var(--gold)" stroke-width="2"/>
-          <rect x="92" y="337" width="12" height="12" rx="2.5" fill="none" stroke="var(--gold)"/>
-          <circle cx="95" cy="340" r="1.1" fill="var(--gold)"/><circle cx="98" cy="343" r="1.1" fill="var(--gold)"/><circle cx="101" cy="346" r="1.1" fill="var(--gold)"/>
-        </g>
-        <text x="160" y="392" text-anchor="middle" font-size="12" fill="var(--mut)">4日目は3日目の結果を引き継がず、</text>
-        <text x="160" y="410" text-anchor="middle" font-size="12" fill="var(--mut)">1日目と同じ順位帯ランダムに戻ります</text>
-      </svg>
+    <div class="mdays">
+      <div class="mday rand"><div class="bd">DAY 1</div><div class="bdy"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="8" cy="8" r="2" fill="currentColor"/><circle cx="13" cy="13" r="2" fill="currentColor"/><circle cx="18" cy="18" r="2" fill="currentColor"/></svg><b>本戦1日目</b><small>順位帯ランダム</small></div></div>
+      <div class="mday prev"><div class="bd">DAY 2</div><div class="bdy"><svg viewBox="0 0 26 26" aria-hidden="true"><line x1="13" y1="4" x2="13" y2="21" stroke="currentColor" stroke-width="2.2"/><line x1="5" y1="8" x2="21" y2="8" stroke="currentColor" stroke-width="2.2"/><circle cx="5" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="21" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><line x1="8" y1="21" x2="18" y2="21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><b>本戦2日目</b><small>前日±50位</small></div></div>
+      <div class="mday prev"><div class="bd">DAY 3</div><div class="bdy"><svg viewBox="0 0 26 26" aria-hidden="true"><line x1="13" y1="4" x2="13" y2="21" stroke="currentColor" stroke-width="2.2"/><line x1="5" y1="8" x2="21" y2="8" stroke="currentColor" stroke-width="2.2"/><circle cx="5" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="21" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><line x1="8" y1="21" x2="18" y2="21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><b>本戦3日目</b><small>前日±50位</small></div></div>
+      <div class="mday rand"><div class="bd">DAY 4</div><div class="bdy"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="8" cy="8" r="2" fill="currentColor"/><circle cx="13" cy="13" r="2" fill="currentColor"/><circle cx="18" cy="18" r="2" fill="currentColor"/></svg><b>本戦4日目</b><small>順位帯ランダム</small></div></div>
     </div>
-    <div class="only-desk" style="max-width:640px;margin-top:20px;">
-      <svg viewBox="0 0 640 235" style="width:100%;height:auto;" aria-hidden="true">
-        <defs>
-          <marker id="mt-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--mint)"/></marker>
-          <marker id="mt-arrow-gold" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--gold)"/></marker>
-        </defs>
-        <rect x="152" y="14" width="280" height="40" rx="8" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.5"/>
-        <text x="292" y="39" text-anchor="middle" font-size="12" font-weight="700" fill="#7a5c28">順位帯グループ（例:1000位刻み）</text>
-        <line x1="245" y1="56" x2="35" y2="108" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow-gold)"/>
-        <line x1="340" y1="56" x2="550" y2="108" stroke="var(--gold)" stroke-width="2" marker-end="url(#mt-arrow-gold)"/>
-        <line x1="130" y1="135" x2="163" y2="135" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow)"/>
-        <line x1="275" y1="135" x2="308" y2="135" stroke="var(--mint)" stroke-width="2.2" marker-end="url(#mt-arrow)"/>
-        <rect x="20" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-        <text x="75" y="139" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦1日目</text>
-        <rect x="165" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-        <text x="220" y="139" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦2日目</text>
-        <rect x="310" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-        <text x="365" y="139" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦3日目</text>
-        <rect x="455" y="110" width="110" height="50" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
-        <text x="510" y="139" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">本戦4日目</text>
-
-        <circle cx="75" cy="110" r="14" fill="var(--bg)" stroke="var(--gold)" stroke-width="2"/>
-        <rect x="69" y="104" width="12" height="12" rx="2.5" fill="none" stroke="var(--gold)" stroke-width="1.4"/>
-        <circle cx="72" cy="107" r="1.1" fill="var(--gold)"/><circle cx="75" cy="110" r="1.1" fill="var(--gold)"/><circle cx="78" cy="113" r="1.1" fill="var(--gold)"/>
-
-        <circle cx="220" cy="110" r="14" fill="var(--bg)" stroke="var(--mint)" stroke-width="2"/>
-        <line x1="220" y1="104" x2="220" y2="116" stroke="var(--mint)" stroke-width="1.4"/>
-        <line x1="214" y1="106" x2="226" y2="106" stroke="var(--mint)" stroke-width="1.4"/>
-        <circle cx="214" cy="106" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/><circle cx="226" cy="106" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/>
-
-        <circle cx="365" cy="110" r="14" fill="var(--bg)" stroke="var(--mint)" stroke-width="2"/>
-        <line x1="365" y1="104" x2="365" y2="116" stroke="var(--mint)" stroke-width="1.4"/>
-        <line x1="359" y1="106" x2="371" y2="106" stroke="var(--mint)" stroke-width="1.4"/>
-        <circle cx="359" cy="106" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/><circle cx="371" cy="106" r="2" fill="none" stroke="var(--mint)" stroke-width="1.2"/>
-
-        <circle cx="510" cy="110" r="14" fill="var(--bg)" stroke="var(--gold)" stroke-width="2"/>
-        <rect x="504" y="104" width="12" height="12" rx="2.5" fill="none" stroke="var(--gold)" stroke-width="1.4"/>
-        <circle cx="507" cy="107" r="1.1" fill="var(--gold)"/><circle cx="510" cy="110" r="1.1" fill="var(--gold)"/><circle cx="513" cy="113" r="1.1" fill="var(--gold)"/>
-
-        <text x="292" y="202" text-anchor="middle" font-size="12" fill="var(--mut)">4日目は3日目の結果を引き継がず、1日目と同じ順位帯ランダムに戻ります</text>
-      </svg>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:16px;max-width:640px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <svg width="22" height="22" viewBox="0 0 26 26" style="flex-shrink:0;"><rect x="2" y="2" width="22" height="22" rx="5" fill="none" stroke="var(--gold)" stroke-width="2.2"/><circle cx="8" cy="8" r="2" fill="var(--gold)"/><circle cx="13" cy="13" r="2" fill="var(--gold)"/><circle cx="18" cy="18" r="2" fill="var(--gold)"/></svg>
-        <span style="font-size:12.5px;color:var(--ink);">順位帯ランダム（1・4日目）</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <svg width="22" height="22" viewBox="0 0 26 26" style="flex-shrink:0;"><line x1="13" y1="4" x2="13" y2="20" stroke="var(--mint)" stroke-width="2.2"/><line x1="5" y1="8" x2="21" y2="8" stroke="var(--mint)" stroke-width="2.2"/><circle cx="5" cy="8" r="3.2" fill="none" stroke="var(--mint)" stroke-width="2.2"/><circle cx="21" cy="8" r="3.2" fill="none" stroke="var(--mint)" stroke-width="2.2"/></svg>
-        <span style="font-size:12.5px;color:var(--ink);">前日貢献度順位±50（2・3日目）</span>
-      </div>
-    </div>
+    <p class="mdays-note">4日目は3日目の結果を引き継がず、1日目と同じ順位帯ランダムに戻ります</p>
     <p style="color:var(--ink);font-size:15px;max-width:640px;margin-top:20px;line-height:1.9">
       <b>本戦1日目</b>は、ある程度の貢献度枠（順位帯）の中でランダムにマッチングされるようです。<br>
       例えばAクラスの場合、1〜1000位・1001〜2000位・2001〜3000位…といった枠の中でのランダム対戦と考えられます。<br><br>

@@ -116,6 +116,16 @@
   .pillar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
   .pillar .t{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;}
   .pillar .t .n{font-family:var(--font-d);color:var(--sakura);font-size:13px;}
+  /* 戦績: 本戦マッチングの4日間カード(桜=順位帯ランダム / ミント=前日±50位) */
+  .mdays{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:640px;margin-top:24px;}
+  .mday{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center;box-shadow:0 4px 14px -8px rgba(31,55,66,.25);}
+  .mday .bd{font-size:11px;font-weight:700;letter-spacing:.14em;color:#fff;padding:3px 0;}
+  .mday.rand .bd{background:var(--sakura);} .mday.prev .bd{background:var(--mint);}
+  .mday .bdy{padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .mday svg{width:22px;height:22px;} .mday.rand svg{color:var(--sakura);} .mday.prev svg{color:var(--mint);}
+  .mday b{font-size:13.5px;} .mday small{font-size:11px;color:var(--mut);}
+  .mdays-note{max-width:640px;font-size:12px;color:var(--mut);text-align:center;margin:12px 0 0;}
+  @media (max-width:520px){ .mdays{grid-template-columns:repeat(2,1fr);} }
   /* 古戦場: 開催ごとの周知の一例(団アビの時刻表とノルマ) */
   .notice-ex{max-width:720px;margin-top:22px;background:var(--card);border:1px dashed var(--gold);border-radius:12px;padding:16px 18px 14px;}
   .ex-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;}
