@@ -57,30 +57,24 @@
   }
 
   /* ---- hero ---- */
-  /* TOP絵は閲覧者の時刻で切り替える(data-todはindex.htmlのスクリプトが設定、JS無効時は昼)。
-     朝=夜明け / 昼=花吹雪 / 夕=マジックアワー / 夜=夜桜の光る花吹雪。絵として完結させるためダークモードでも同じ配色 */
-  .hero{--h-ink:#1f3742;--h-eye:#d46a8f;position:relative;
-    background-image:linear-gradient(180deg,#e3f2fb 0%,#fff 100%);
-    color:var(--h-ink);overflow:hidden;padding-block:76px 64px;}
-  .hero[data-tod="morning"]{--h-ink:#26304a;--h-eye:#c45a83;
-    background-image:linear-gradient(180deg,#9fb6dc 0%,#e9c3d3 50%,#fde3c2 85%,#fff1da 100%);}
-  .hero[data-tod="evening"]{--h-ink:#fffaf2;--h-eye:#ffd6e4;
-    background-image:linear-gradient(180deg,#3d4e86 0%,#9b7cb0 45%,#f1a3a6 75%,#fbc99a 100%);}
-  .hero[data-tod="night"]{--h-ink:#f4f1e8;--h-eye:#f4a9c3;background-image:
-      radial-gradient(110px 110px at 14% 22%, rgba(212,106,143,.16), transparent 70%),
-      radial-gradient(130px 130px at 86% 18%, rgba(63,157,132,.14), transparent 70%),
-      radial-gradient(ellipse 80% 55% at 18% -10%, rgba(80,112,175,.45) 0%, transparent 60%),
-      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(126,92,156,.40) 0%, transparent 55%),
-      linear-gradient(180deg,#0f1430 0%,#251f48 100%);}
-  .hero-sky{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
-  .hero-sky span{position:absolute;display:none;}
-  .hero-sky .fx{display:none;position:absolute;inset:0;width:100%;height:100%;}
-  .hero:not([data-tod]) .fx-day,.hero[data-tod="day"] .fx-day,.hero[data-tod="morning"] .fx-morning,
-  .hero[data-tod="evening"] .fx-evening,.hero[data-tod="night"] .fx-night{display:block;}
-  .hero[data-tod="night"] .stars{display:block;inset:0;opacity:.75;background-image:radial-gradient(1.8px 1.5px at 53% 10%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.2px at 49% 78%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.5px at 7% 15%, #fff 50%, transparent 100%),radial-gradient(2.2px 2.2px at 11% 34%, #fff 50%, transparent 100%),radial-gradient(1.2px 2.2px at 10% 76%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.5px at 83% 78%, #fff 50%, transparent 100%),radial-gradient(1.2px 2.2px at 9% 32%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.5px at 40% 57%, #fff 50%, transparent 100%),radial-gradient(1.5px 1.2px at 76% 43%, #fff 50%, transparent 100%),radial-gradient(1.5px 1.2px at 77% 77%, #fff 50%, transparent 100%),radial-gradient(1.5px 1.8px at 15% 74%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.2px at 82% 30%, #fff 50%, transparent 100%),radial-gradient(2.2px 2.2px at 43% 63%, #fff 50%, transparent 100%),radial-gradient(2.2px 1.8px at 41% 35%, #fff 50%, transparent 100%),radial-gradient(1.5px 1.5px at 13% 77%, #fff 50%, transparent 100%),radial-gradient(1.8px 2.2px at 46% 61%, #fff 50%, transparent 100%),radial-gradient(1.8px 1.2px at 18% 69%, #fff 50%, transparent 100%),radial-gradient(2.2px 1.5px at 46% 23%, #fff 50%, transparent 100%),radial-gradient(2.2px 2.2px at 8% 13%, #fff 50%, transparent 100%),radial-gradient(1.8px 1.8px at 91% 48%, #fff 50%, transparent 100%),radial-gradient(2.2px 2.2px at 11% 15%, #fff 50%, transparent 100%),radial-gradient(1.8px 2.2px at 92% 12%, #fff 50%, transparent 100%),radial-gradient(1.2px 1.8px at 85% 77%, #fff 50%, transparent 100%),radial-gradient(2.2px 1.8px at 94% 53%, #fff 50%, transparent 100%),radial-gradient(1.8px 1.2px at 62% 49%, #fff 50%, transparent 100%),radial-gradient(1.5px 1.2px at 66% 11%, #fff 50%, transparent 100%);}
+  /* TOP絵は閲覧者の時刻で5枚の写真を切り替える(data-todはindex.htmlのスクリプトが設定、JS無効時は昼)。
+     夜明け4-7時 / 朝7-11時 / 昼11-16時 / 夕16-19時 / 夜19-4時。
+     写真は桜を閉じ込めた水晶球が主役なので、球が切れないよう横は左寄り(30%)・縦はやや上(40%)で合わせる。
+     団名は右下に小さく置き、読みやすさのため右下だけ暗くする */
+  .hero{--h-ink:#fff;--h-eye:#ffd0e0;position:relative;overflow:hidden;color:var(--h-ink);
+    min-height:clamp(260px,48vw,720px);padding:0;display:flex;align-items:flex-end;justify-content:flex-end;
+    background:#1a1a2a center/cover no-repeat;background-position:30% 40%;
+    background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-day.jpg);}
+  .hero[data-tod="dawn"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-dawn.jpg);}
+  .hero[data-tod="morning"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-morning.jpg);}
+  .hero[data-tod="evening"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-evening.jpg);}
+  .hero[data-tod="night"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-night.jpg);}
+  .hero .heroin{max-width:none;margin:0;text-align:right;padding:0 clamp(16px,3vw,40px) clamp(14px,2.4vw,28px);
+    text-shadow:0 2px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.4);}
   .heroin{position:relative;text-align:center;}
   .eyebrow{font-size:12.5px;letter-spacing:.18em;color:var(--sakura);text-transform:uppercase;font-weight:700;}
-  .hero h1{font-size:clamp(40px,8vw,64px);margin-top:14px;line-height:1.15;color:var(--h-ink);}
+  .hero .eyebrow{font-size:clamp(10px,1vw,12.5px);letter-spacing:.24em;}
+  .hero h1{font-size:clamp(26px,3.4vw,44px);margin-top:2px;line-height:1.15;letter-spacing:.08em;color:var(--h-ink);}
   .hero .eyebrow{color:var(--h-eye);}
   .hero p.lead{max-width:540px;margin:18px auto 0;color:var(--sky-mut);font-size:15px;}
   .badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:30px;}
