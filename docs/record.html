@@ -58,7 +58,13 @@
 <script>
 // LATESTカードの背景もTOP絵と同じく時刻で2時間毎の写真に(22時台は2枚からランダム)。?h=14 / ?v=b で確認用に固定
 (function(){var e=document.querySelector('.highlight.photo'),p=new URLSearchParams(location.search),q=p.get('h'),
-h=q!=null?+q:new Date().getHours();e.dataset.h=String(Math.floor(h/2)*2).padStart(2,'0');e.dataset.v=p.get('v')||(Math.random()<.5?'a':'b');})();
+h=q!=null?+q:new Date().getHours();e.dataset.h=String(Math.floor(h/2)*2).padStart(2,'0');e.dataset.v=p.get('v')||(Math.random()<.5?'a':'b');
+// パララックス: スクロール中は写真だけ文字より遅れて動く。写真をカードより縦長に敷き、カードの画面内の位置で上下にずらす
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var A=1375/768;function size(){var W=e.clientWidth,H=e.clientHeight;e.style.backgroundSize=Math.max(W,H*1.4*A)+'px auto';move();}
+function move(){var r=e.getBoundingClientRect(),c=(r.top+r.height/2)/innerHeight;if(c<-.5||c>1.5)return;
+c=Math.min(1,Math.max(0,c));e.style.backgroundPosition='30% '+(85-c*70).toFixed(1)+'%';}
+addEventListener('scroll',move,{passive:true});addEventListener('resize',size);size();})();
 </script>
     <div class="tw">
       <table class="perf">
