@@ -114,8 +114,8 @@
   /* about */
   .pillars{display:flex;flex-direction:column;gap:14px;margin-top:32px;max-width:720px;}
   .pillar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
-  .pillar .t{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;}
-  .pillar .t .n{font-family:var(--font-d);color:var(--sakura);font-size:13px;}
+  .pillar .t{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:10px;}
+  .pillar .t .n{font-family:var(--font-d);color:var(--sakura);font-size:16px;line-height:1.2;padding-right:10px;border-right:1.5px solid var(--sakura-soft);}
   /* 戦績: 本戦マッチングの4日間カード(桜=順位帯ランダム / ミント=前日±50位) */
   .mdays{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:640px;margin-top:24px;}
   .mday{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center;box-shadow:0 4px 14px -8px rgba(31,55,66,.25);}
