@@ -57,18 +57,25 @@
   }
 
   /* ---- hero ---- */
-  /* TOP絵は閲覧者の時刻で5枚の写真を切り替える(data-todはindex.htmlのスクリプトが設定、JS無効時は昼)。
-     夜明け4-7時 / 朝7-11時 / 昼11-16時 / 夕16-19時 / 夜19-4時。
+  /* TOP絵は閲覧者の時刻で2時間毎の写真に切り替える(data-hはindex.htmlのスクリプトが設定、JS無効時は12時)。
+     写真の時計表示と時間帯を合わせる。18時台は時計の無い夜景、22時台は20時の写真を続けて使う。
      写真は桜を閉じ込めた水晶球が主役なので、球が切れないよう横は左寄り(30%)・縦は上寄り(20%。横長に切ると下の机側を削る)で合わせる。
      団名は右下に小さく置き、読みやすさのため右下だけ暗くする */
   .hero{--h-ink:#fff;--h-eye:#ffd0e0;position:relative;overflow:hidden;color:var(--h-ink);
     min-height:clamp(200px,28vw,500px);padding:0;display:flex;align-items:flex-end;justify-content:flex-end;
     background:#1a1a2a center/cover no-repeat;background-position:30% 20%;
-    background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-day.jpg);}
-  .hero[data-tod="dawn"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-dawn.jpg);}
-  .hero[data-tod="morning"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-morning.jpg);}
-  .hero[data-tod="evening"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-evening.jpg);}
-  .hero[data-tod="night"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-night.jpg);}
+    background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-12.jpg);}
+  .hero[data-h="00"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-00.jpg);}
+  .hero[data-h="02"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-02.jpg);}
+  .hero[data-h="04"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-04.jpg);}
+  .hero[data-h="06"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-06.jpg);}
+  .hero[data-h="08"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-08.jpg);}
+  .hero[data-h="10"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-10.jpg);}
+  .hero[data-h="14"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-14.jpg);}
+  .hero[data-h="16"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-16.jpg);}
+  .hero[data-h="18"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-18.jpg);}
+  .hero[data-h="20"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-20.jpg);}
+  .hero[data-h="22"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-20.jpg);}
   /* 写真の下40%を背景へ溶かす(霞のフェード)。団名はフェードにかからない高さに置く */
   .hero{-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 60%,transparent 100%);
     mask-image:linear-gradient(to bottom,#000 0,#000 60%,transparent 100%);}

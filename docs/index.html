@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20261002o">
+<link rel="stylesheet" href="assets/style.css?v=20261003a">
 </head>
 <body>
 
@@ -36,9 +36,9 @@
 </section>
 <div class="hero-line" aria-hidden="true"><i></i><i class="g"></i></div>
 <script>
-// TOP絵を閲覧者の時刻で切り替え(夜明け4-7時/朝7-11時/昼11-16時/夕16-19時/夜19-4時)。?tod=dawn等で確認用に固定できる
-(function(){var h=document.querySelector('.hero');function set(){var q=new URLSearchParams(location.search).get('tod'),hr=new Date().getHours();
-h.dataset.tod=q||(hr>=4&&hr<7?'dawn':hr>=7&&hr<11?'morning':hr>=11&&hr<16?'day':hr>=16&&hr<19?'evening':'night');}set();setInterval(set,600000);})();
+// TOP絵を閲覧者の時刻で2時間毎の写真に切り替え(0,2,4…22時)。?h=14 のように指定すると確認用に固定できる
+(function(){var e=document.querySelector('.hero');function set(){var q=new URLSearchParams(location.search).get('h'),
+h=q!=null?+q:new Date().getHours();e.dataset.h=String(Math.floor(h/2)*2).padStart(2,'0');}set();setInterval(set,600000);})();
 </script>
 
 <section id="concept">
