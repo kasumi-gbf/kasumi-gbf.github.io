@@ -169,6 +169,29 @@
   .highlight .raid{font-size:12.5px;color:var(--mint);letter-spacing:.1em;font-weight:700;}
   .highlight h3{font-size:26px;margin-top:8px;color:var(--ink);}
   .highlight .sub{color:var(--mut);font-size:13.5px;margin-top:8px;}
+  /* LATESTカード: TOP絵と同じ時刻の写真を背景に、文字と数値はすりガラスの板にのせる */
+  .highlight.photo{border:0;color:#fff;background:#141228 30% 30%/cover no-repeat;
+    background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-12.jpg);}
+  .highlight.photo[data-h="00"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-00.jpg);}
+  .highlight.photo[data-h="02"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-02.jpg);}
+  .highlight.photo[data-h="04"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-04.jpg);}
+  .highlight.photo[data-h="06"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-06.jpg);}
+  .highlight.photo[data-h="08"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-08.jpg);}
+  .highlight.photo[data-h="10"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-10.jpg);}
+  .highlight.photo[data-h="14"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-14.jpg);}
+  .highlight.photo[data-h="16"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-16.jpg);}
+  .highlight.photo[data-h="18"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-18.jpg);}
+  .highlight.photo[data-h="20"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-20.jpg);}
+  .highlight.photo[data-h="22"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-22a.jpg);}
+  .highlight.photo[data-h="22"][data-v="b"]{background-image:linear-gradient(rgba(10,10,30,.22),rgba(10,10,30,.22)),url(hero-22b.jpg);}
+  .highlight.photo .gl,.highlight.photo .hstats{background:rgba(20,18,40,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.25);border-radius:14px;}
+  .highlight.photo .gl{padding:18px 22px;}
+  .highlight.photo .hstats{padding:14px 18px;}
+  .highlight.photo .raid{color:#ffd0e0;}
+  .highlight.photo h3{color:#fff;}
+  .highlight.photo .sub,.highlight.photo .hstat .k{color:#d4d6e6;}
+  .highlight.photo .hstat .v{color:#ffc6da;}
   .hstats{display:flex;gap:28px;}
   @media (max-width:680px){ .hstats{justify-content:center;flex-wrap:wrap;} }
   .hstat .v{font-family:var(--font-d);font-size:30px;color:var(--sakura);line-height:1;}

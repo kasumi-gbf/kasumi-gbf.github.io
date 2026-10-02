@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20261003b">
+<link rel="stylesheet" href="assets/style.css?v=20261003c">
 </head>
 <body>
 
@@ -43,8 +43,8 @@
       古戦場戦績
     </h2>
     <p class="sectlead">第57回〜第84回（直近28回）の成績です。予選は毎回300位以内をキープし、総合貢献度も右肩上がりです。</p>
-    <div class="highlight">
-      <div>
+    <div class="highlight photo">
+      <div class="gl">
         <div class="raid">LATEST — 第84回古戦場</div>
         <h3>予選300位以内<br>本戦4戦4勝</h3>
         <div class="sub">総合貢献度 3,977.5億／最終総合順位 275位</div>
@@ -55,6 +55,11 @@
         <div class="hstat"><div class="v">275<span style="font-size:15px">位</span></div><div class="k">総合 最終順位</div></div>
       </div>
     </div>
+<script>
+// LATESTカードの背景もTOP絵と同じく時刻で2時間毎の写真に(22時台は2枚からランダム)。?h=14 / ?v=b で確認用に固定
+(function(){var e=document.querySelector('.highlight.photo'),p=new URLSearchParams(location.search),q=p.get('h'),
+h=q!=null?+q:new Date().getHours();e.dataset.h=String(Math.floor(h/2)*2).padStart(2,'0');e.dataset.v=p.get('v')||(Math.random()<.5?'a':'b');})();
+</script>
     <div class="tw">
       <table class="perf">
         <tr><th>開催回</th><th>予選 最終順位</th><th>本戦 勝敗</th><th>本戦 最終順位</th><th>総合貢献度</th></tr>
