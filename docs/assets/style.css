@@ -59,11 +59,11 @@
   /* ---- hero ---- */
   /* TOP絵は閲覧者の時刻で5枚の写真を切り替える(data-todはindex.htmlのスクリプトが設定、JS無効時は昼)。
      夜明け4-7時 / 朝7-11時 / 昼11-16時 / 夕16-19時 / 夜19-4時。
-     写真は桜を閉じ込めた水晶球が主役なので、球が切れないよう横は左寄り(30%)・縦はやや上(40%)で合わせる。
+     写真は桜を閉じ込めた水晶球が主役なので、球が切れないよう横は左寄り(30%)・縦は上寄り(22%。横長に切ると下の机側を削る)で合わせる。
      団名は右下に小さく置き、読みやすさのため右下だけ暗くする */
   .hero{--h-ink:#fff;--h-eye:#ffd0e0;position:relative;overflow:hidden;color:var(--h-ink);
-    min-height:clamp(260px,48vw,720px);padding:0;display:flex;align-items:flex-end;justify-content:flex-end;
-    background:#1a1a2a center/cover no-repeat;background-position:30% 40%;
+    min-height:clamp(240px,36vw,540px);padding:0;display:flex;align-items:flex-end;justify-content:flex-end;
+    background:#1a1a2a center/cover no-repeat;background-position:30% 22%;
     background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-day.jpg);}
   .hero[data-tod="dawn"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-dawn.jpg);}
   .hero[data-tod="morning"]{background-image:radial-gradient(ellipse 50% 45% at 100% 100%,rgba(10,8,25,.55),transparent 75%),url(hero-morning.jpg);}
