@@ -549,6 +549,15 @@ def api_live(q):
             ours = {h: v for h, v in zip(HOURS, lg.get("o") or []) if v is not None}
             opp = {h: v for h, v in zip(HOURS, lg.get("p") or []) if v is not None}
             archived = bool(ours or opp)
+    if not (any(v is not None for v in ours.values()) or any(v is not None for v in opp.values())):
+        ah = archive_honsen(raid, date)          # 最後はリポジトリ内のアーカイブ(確定した回)
+        if ah:
+            hrs = ah.get("hours") or (archive_get(raid) or {}).get("hours") or HOURS
+            ours = {h: v for h, v in zip(hrs, ah.get("o") or []) if v is not None}
+            # 相手は保存した団と同じときだけ使う(別の団を入れたのに保存側の数字を出さない)
+            if str(ah.get("opp_gid")) == str(opp_gid):
+                opp = {h: v for h, v in zip(hrs, ah.get("p") or []) if v is not None}
+            archived = bool(ours or opp)
     past = [{"date": d, "label": day_label.get(d, d),
              "ours": {"cum": res.get(("ours", d), {}), "speed": _speeds(res.get(("ours", d), {}))},
              "opp": {"cum": res.get(("opp", d), {}), "speed": _speeds(res.get(("opp", d), {}))}}
@@ -616,6 +625,7 @@ def api_live(q):
         # 本戦1日目は前日が無いので予選2日目(8時以降)で代用する
         o_pat = p_pat = None
         pat_note = None
+        src = None                           # どの分岐にも入らない日(過去比較なしの本戦2〜4日目)もある
         if prev_day:
             o_pat = time_pattern(prev_day["ours"]["cum"])
             p_pat = time_pattern(prev_day["opp"]["cum"])
@@ -1324,12 +1334,14 @@ def api_yosen(q):
             gr = gr_series(raid)
         cur = merge_yosen(cur, ylog_get(raid))
         cur = merge_yosen(cur, gr)
+        cur = merge_yosen(cur, archive_yosen(raid))
         cur = merge_yosen(cur, yosen_seed(raid))     # 固定の確定値(gbfdata収録前の序盤)
         if has(cur):
             cur = pad_yosen_axis(cur, meta_for(raid)["schedules"])
     else:
         if not has(cur):
             cur = merge_yosen(cur, ylog_get(raid))
+        cur = merge_yosen(cur, archive_yosen(raid))
         cur = merge_yosen(cur, yosen_seed(raid))
     if has(cur):
         threading.Thread(target=ylog_save,
@@ -1344,7 +1356,8 @@ def api_yosen(q):
         got = ylog_get(raid - 1)
         if got:
             prev, pv_archived = got, True
-    if prev or yosen_seed(raid - 1):             # 前回側も序盤の確定値で補う
+    if prev or archive_yosen(raid - 1) or yosen_seed(raid - 1):   # 前回側もアーカイブと確定値で補う
+        prev = merge_yosen(prev, archive_yosen(raid - 1))
         prev = merge_yosen(prev, yosen_seed(raid - 1))
 
     return {"raid": raid, "keys": cur["keys"], "labels": cur["labels"],
@@ -2265,10 +2278,52 @@ def opp_map():
         return m
 
 
+# ---------- 確定した回の団データ(リポジトリ内ファイル) ----------
+# gbfdataは毎時データを直近2回ぶんしか持たず、シートのアーカイブ(A3)も書き戻しで欠けることが
+# あるため、終わった回は tools/archive_raid.py で archive/raid-NNN.json に書き出してコミットし、
+# ここを最後のよりどころにする(予選の毎時・本戦各日の自団/相手の毎時・対戦相手)
+ARCHIVE_DIR = os.path.join(BASE, "archive")
+_archive_cache = {}
+
+
+def archive_get(raid):
+    if raid in _archive_cache:
+        return _archive_cache[raid]
+    path = os.path.join(ARCHIVE_DIR, f"raid-{int(raid):03d}.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+    except (OSError, ValueError):
+        d = None
+    _archive_cache[raid] = d
+    return d
+
+
+def archive_yosen(raid):
+    """アーカイブの予選を yosen_series と同じ形に(merge_yosenで不足分だけ補う用)"""
+    y = (archive_get(raid) or {}).get("yosen")
+    if not y or not y.get("k"):
+        return None
+    ks = y["k"]
+    oc = {k: v for k, v in zip(ks, y.get("o") or []) if v is not None}
+    orank = {k: v for k, v in zip(ks, y.get("r") or []) if v is not None}
+    bc = {k: v for k, v in zip(ks, y.get("b") or []) if v is not None}
+    return {"keys": ks, "labels": y.get("l") or [hour_label(k.split(" ")[1]) for k in ks],
+            "ours": {"cum": oc, "rank": orank, "speed": {}}, "border": {"cum": bc, "speed": {}}}
+
+
+def archive_honsen(raid, date):
+    return ((archive_get(raid) or {}).get("honsen") or {}).get(date)
+
+
 def opp_for_raid(raid):
     """その開催回の {日付: {gid, name}}。画面が相手欄を自動で埋めるのに使う"""
     pre = f"{raid}|"
-    return {k[len(pre):]: v for k, v in opp_map().items() if k.startswith(pre)}
+    out = {k[len(pre):]: v for k, v in opp_map().items() if k.startswith(pre)}
+    for d, h in ((archive_get(raid) or {}).get("honsen") or {}).items():
+        if d not in out and h.get("opp_gid"):
+            out[d] = {"gid": str(h["opp_gid"]), "name": h.get("opp_name") or ""}
+    return out
 
 
 def log_map():
