@@ -1324,10 +1324,13 @@ def api_yosen(q):
             gr = gr_series(raid)
         cur = merge_yosen(cur, ylog_get(raid))
         cur = merge_yosen(cur, gr)
+        cur = merge_yosen(cur, yosen_seed(raid))     # 固定の確定値(gbfdata収録前の序盤)
         if has(cur):
             cur = pad_yosen_axis(cur, meta_for(raid)["schedules"])
-    elif not has(cur):
-        cur = merge_yosen(cur, ylog_get(raid))
+    else:
+        if not has(cur):
+            cur = merge_yosen(cur, ylog_get(raid))
+        cur = merge_yosen(cur, yosen_seed(raid))
     if has(cur):
         threading.Thread(target=ylog_save,
                          args=(raid, cur["keys"], cur["labels"],
@@ -1341,6 +1344,8 @@ def api_yosen(q):
         got = ylog_get(raid - 1)
         if got:
             prev, pv_archived = got, True
+    if prev or yosen_seed(raid - 1):             # 前回側も序盤の確定値で補う
+        prev = merge_yosen(prev, yosen_seed(raid - 1))
 
     return {"raid": raid, "keys": cur["keys"], "labels": cur["labels"],
             "ours": cur["ours"], "border": cur["border"],
@@ -2394,6 +2399,24 @@ def ylog_get(raid):
 # 第84回 20:05のgbfrankingスナップショットで見えた順位。順位をアーカイブに入れる前だったので
 # ここで補う(第84回が終わったら消してよい)
 _YOSEN_RANK_SEED = {84: {"2026-09-21 20:00": 244}}
+
+# gbfdataが収録を始める前の予選序盤(第84回は1日目20・21時)の確定値。出典はgbfrankingの
+# 公開履歴(nmotsu/gbfrankingdata-ev084 の guild-data.json.gz、20:05/21:05のスナップショット。
+# 22:07はgbfdataの22時と完全一致を確認済み)。アーカイブ(A3)はシート全体の書き戻しで
+# 予選キーが落ちることがあり、2026-10-04に20・21時が消えていたため、ここに固定で持つ。
+# 値: (霞桜団の累積億, 団順位, 300位ボーダー累積億)
+_YOSEN_SEED = {84: {"2026-09-21 20:00": (6.1, 244, 5.5), "2026-09-21 21:00": (18.9, 141, 12.5)}}
+
+
+def yosen_seed(raid):
+    """_YOSEN_SEED を yosen_series と同じ形に(merge_yosenで不足分だけ補う用)"""
+    sd = _YOSEN_SEED.get(raid)
+    if not sd:
+        return None
+    keys = sorted(sd, key=lambda k: (k.split(" ")[0], int(k.split(" ")[1].split(":")[0])))
+    return {"keys": keys, "labels": [hour_label(k.split(" ")[1]) for k in keys],
+            "ours": {"cum": {k: sd[k][0] for k in keys}, "rank": {k: sd[k][1] for k in keys}, "speed": {}},
+            "border": {"cum": {k: sd[k][2] for k in keys}, "speed": {}}}
 
 
 def api_opponent(data):
