@@ -106,6 +106,9 @@
   .btn.ghost{background:var(--card);color:var(--sky-ink);border:1px solid var(--line);}
 
   /* ---- sections ---- */
+  /* #koseiba などのリンクで飛んだとき、固定ヘッダーに見出しが隠れないよう少し下で止める */
+  html{scroll-padding-top:12px;}
+  @media (max-width:760px){ html{scroll-padding-top:44px;} }
   section{padding-block:64px;}
   section+section{border-top:1px solid var(--line);}
   /* 団コンセプト(団案内の上) */
