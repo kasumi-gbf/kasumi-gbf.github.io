@@ -2596,7 +2596,24 @@ def api_board_post(data):
     quest = data.get("quest")
     if quest not in QUESTS:
         return {"error": "クエストが不正です"}, 400
-    if "schedule" in data:
+    if data.get("reset"):
+        # そのクエストの日程と全属性の参加者・コメントを消す。誤操作に備えて直前の内容を
+        # m["b"][quest] に1世代だけ残し、"undo" で戻せるようにする
+        def fn(m):
+            ent = {k: v for k, v in (m.get("e") or {}).items() if k.startswith(quest + "|")}
+            m.setdefault("b", {})[quest] = {"s": (m.get("s") or {}).get(quest, ""), "e": ent, "t": _now_iso()}
+            (m.get("s") or {}).pop(quest, None)
+            for k in ent:
+                m["e"].pop(k, None)
+    elif data.get("undo"):
+        def fn(m):
+            bk = (m.get("b") or {}).pop(quest, None)
+            if not bk:
+                return
+            if bk.get("s"):
+                m.setdefault("s", {})[quest] = bk["s"]
+            m.setdefault("e", {}).update(bk.get("e") or {})
+    elif "schedule" in data:
         date = _text(data.get("schedule"), 60)
 
         def fn(m):

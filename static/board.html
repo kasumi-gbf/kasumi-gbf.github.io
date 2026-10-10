@@ -47,6 +47,10 @@ h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
 .status.err{background:#c0392b;color:#fff;}
 .note{font-size:11.5px;color:var(--mut);line-height:1.7;margin-top:20px;}
 .loading{color:var(--mut);font-size:13px;padding:40px 0;text-align:center;}
+.reset-row{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+.reset-btn{border:1px solid #d9a3a3;background:transparent;color:#c0392b;border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+.reset-btn:hover{background:rgba(192,57,43,.06);}
+.undo-btn{border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:7px 16px;font-size:12.5px;cursor:pointer;font-family:inherit;}
 /* iPhoneは16px未満の入力欄をタップすると画面が拡大されるので、スマホでは16pxにする */
 @media (max-width:640px){ select,input,textarea{font-size:16px !important;} }
 </style>
@@ -65,6 +69,10 @@ h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
     <input id="schedInput" type="text" maxlength="60" placeholder="例: 1/20(月) 21:00〜">
   </div>
   <div id="rows"><div class="loading">読み込み中…（サーバー起動時は30秒ほどかかります）</div></div>
+  <div class="reset-row" id="resetRow" hidden>
+    <button class="undo-btn" type="button" id="undoBtn" hidden>元に戻す</button>
+    <button class="reset-btn" type="button" id="resetBtn">この高難易度の記載をリセット</button>
+  </div>
   <p class="note">名前欄は誰でも書き換えられる簡易的な仕組みです。埋まっている枠を上書きしないよう、団内チャットやDiscordであわせてご確認ください。</p>
 </div>
 <div class="status" id="status"></div>
@@ -165,6 +173,16 @@ function render(){
     row.querySelector('.clear').onclick = () => post({quest, attr: attr.key, name: '', memo: ''});
     rows.appendChild(row);
   });
+  // リセット: 開催日程と全属性の参加者・コメントを消す。直前の内容はサーバーに1世代残り「元に戻す」で戻せる
+  const qlabel = QUESTS.find(q => q.key === quest).label;
+  document.getElementById('resetRow').hidden = false;
+  const rb = document.getElementById('resetBtn'), ub = document.getElementById('undoBtn');
+  rb.textContent = qlabel + 'の記載をリセット';
+  rb.onclick = () => {
+    if (confirm(qlabel + 'の開催日程・参加者・コメントをすべて消します。よろしいですか？')) post({quest, reset: true});
+  };
+  ub.hidden = !(board.b || {})[quest];
+  ub.onclick = () => post({quest, undo: true});
 }
 
 render();
