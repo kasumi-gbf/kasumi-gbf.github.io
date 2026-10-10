@@ -28,7 +28,12 @@ h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
 .tab.active{background:var(--sakura-soft);border-color:var(--sakura);color:var(--sakura);}
 .sched{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:16px;}
 .sched label{font-size:12.5px;color:var(--mut);white-space:nowrap;}
-.sched input{flex:1;border:none;background:transparent;color:var(--ink);font-size:14px;outline:none;min-width:0;font-family:inherit;}
+.sched .pk{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;background:var(--bg);color:var(--ink);outline:none;font-family:inherit;min-width:0;}
+.sched .pk:focus{border-color:var(--sakura);}
+.sched #schedDate{flex:1.4;}.sched #schedTime{flex:1;}
+.sched .clear{border:none;background:none;color:var(--mut);font-size:14px;cursor:pointer;padding:4px 6px;}
+.schedout{font-size:12.5px;color:var(--mut);margin:-8px 2px 14px;min-height:1em;}
+.schedout b{color:var(--sakura);}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
 .row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .attr-badge{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
@@ -51,6 +56,8 @@ h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
 .reset-btn{border:1px solid #d9a3a3;background:transparent;color:#c0392b;border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
 .reset-btn:hover{background:rgba(192,57,43,.06);}
 .undo-btn{border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:7px 16px;font-size:12.5px;cursor:pointer;font-family:inherit;}
+/* スマホでは「開催日程」を上の段にして、日付と時刻の欄を横幅いっぱいに使う(16pxだと横並びでは切れる) */
+@media (max-width:640px){ .sched{flex-wrap:wrap;row-gap:6px;} .sched label{width:100%;} .sched #schedDate{flex:1.5;} .sched #schedTime{flex:1;} }
 /* iPhoneは16px未満の入力欄をタップすると画面が拡大されるので、スマホでは16pxにする */
 @media (max-width:640px){ select,input,textarea{font-size:16px !important;} }
 </style>
@@ -65,9 +72,12 @@ h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
   <p class="lead">ヴェルサシア・ルシゼロ・天元の参加者を、属性ごとに登録できます。ログイン不要で、誰でもその場で編集できます。</p>
   <div class="tabs" id="tabs"></div>
   <div class="sched">
-    <label for="schedInput">開催日程</label>
-    <input id="schedInput" type="text" maxlength="60" placeholder="例: 1/20(月) 21:00〜">
+    <label for="schedDate">開催日程</label>
+    <input id="schedDate" class="pk" type="date" aria-label="開催日">
+    <input id="schedTime" class="pk" type="time" step="900" aria-label="開始時刻">
+    <button class="clear" id="schedClear" type="button" aria-label="日程をクリア">✕</button>
   </div>
+  <div class="schedout" id="schedOut"></div>
   <div id="rows"><div class="loading">読み込み中…（サーバー起動時は30秒ほどかかります）</div></div>
   <div class="reset-row" id="resetRow" hidden>
     <button class="undo-btn" type="button" id="undoBtn" hidden>元に戻す</button>
@@ -138,9 +148,28 @@ function renderTabs(){
 function render(){
   renderTabs();
   if (!loaded) return;
-  const sched = document.getElementById('schedInput');
-  sched.value = (board.s || {})[quest] || '';
-  sched.onchange = () => post({quest, schedule: sched.value});
+  // 開催日程: 端末標準の日付・時刻ピッカーで選び、「1/20(月) 21:00〜」の形で保存する。
+  // 保存済みの文字から日付・時刻を読み戻す(年は持たないので、今日より2か月以上前なら翌年とみなす)
+  const sd = document.getElementById('schedDate'), st = document.getElementById('schedTime'),
+        so = document.getElementById('schedOut'), saved = (board.s || {})[quest] || '';
+  const m = saved.match(/^(\d{1,2})\/(\d{1,2})[^\d]*?(\d{1,2}):(\d{2})?/);
+  if (m) {
+    const now = new Date(); let y = now.getFullYear();
+    if (new Date(y, m[1] - 1, m[2]) < new Date(now.getFullYear(), now.getMonth() - 2, now.getDate())) y++;
+    sd.value = `${y}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+    st.value = `${String(m[3]).padStart(2,'0')}:${m[4] || '00'}`;
+  } else { sd.value = ''; st.value = ''; }
+  so.innerHTML = saved ? '開催：<b>' + esc(saved) + '</b>' : '';
+  const W = '日月火水木金土';
+  const saveSched = () => {
+    if (!sd.value) { if (saved) post({quest, schedule: ''}); return; }
+    if (!st.value) st.value = '21:00';
+    const d = new Date(sd.value + 'T00:00'), t = st.value.replace(/^0/, '');
+    const s = `${d.getMonth() + 1}/${d.getDate()}(${W[d.getDay()]}) ${t}〜`;
+    if (s !== saved) post({quest, schedule: s});
+  };
+  sd.onchange = saveSched; st.onchange = saveSched;
+  document.getElementById('schedClear').onclick = () => { if (saved) post({quest, schedule: ''}); };
 
   const rows = document.getElementById('rows');
   rows.innerHTML = '';
