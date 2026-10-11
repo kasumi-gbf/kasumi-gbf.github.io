@@ -2813,6 +2813,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/ping":
+            # 外部の起こし続け監視(cron-job.org)用。応答が大きいと
+            # 「output too large」で失敗扱い→ジョブ自動停止になるため最小応答にする
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", "2")
+            self.end_headers()
+            self.wfile.write(b"ok")
+            return
         if parsed.path in ROUTES:
             try:
                 body = json.dumps(ROUTES[parsed.path](urllib.parse.parse_qs(parsed.query)),
