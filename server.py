@@ -2763,6 +2763,33 @@ ROUTES = {"/api/config": api_config, "/api/live": api_live,
           "/api/board": api_board, "/api/surveys": api_surveys}
 
 
+# ---- 起こし続け(Render無料枠のスリープ対策) ----
+# 外部監視(cron-job.org)の到達状況を /pinglog で確認できるよう、起動時刻と
+# 直近の /ping 受信時刻を覚えておく(スリープで再起動すると消える＝起きていた区間が分かる)
+JST = timezone(timedelta(hours=9))
+BOOT_AT = datetime.now(JST)
+_PING_LOG = []          # [(時刻文字列, UA先頭)]
+KEEPALIVE_HOURS = range(7, 23)   # JST 7:00〜22:59 は自分でも起こし続ける
+
+
+def keepalive_loop():
+    """起きている間は自分の公開URLを10分毎に叩き、7〜23時のスリープを防ぐ。
+    外向き→Renderの入口経由で戻るので「受信トラフィック」として数えられる。
+    スリープ中は止まっているので、朝いちばんの起床は外部監視か最初の来訪者に任せる"""
+    url = os.environ.get("RENDER_EXTERNAL_URL")
+    if not url:
+        return
+    while True:
+        time.sleep(600)
+        if datetime.now(JST).hour in KEEPALIVE_HOURS:
+            try:
+                urllib.request.urlopen(urllib.request.Request(
+                    url.rstrip("/") + "/ping", headers={"User-Agent": "self-keepalive"}),
+                    timeout=30).read()
+            except Exception:
+                pass
+
+
 class Handler(BaseHTTPRequestHandler):
     # HTTP/1.1 の持続的接続にする(Render等のプロキシが接続を再利用しても
     # no-server にならないように)。全レスポンスで Content-Length を送ること。
@@ -2813,7 +2840,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/pinglog":
+            body = json.dumps({"boot": BOOT_AT.strftime("%m/%d %H:%M:%S"),
+                               "pings": _PING_LOG[-40:]}, ensure_ascii=False).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path == "/ping":
+            _PING_LOG.append((datetime.now(JST).strftime("%m/%d %H:%M:%S"),
+                              (self.headers.get("User-Agent") or "")[:40]))
+            del _PING_LOG[:-200]
             # 外部の起こし続け監視(cron-job.org)用。応答が大きいと
             # 「output too large」で失敗扱い→ジョブ自動停止になるため最小応答にする
             self.send_response(200)
@@ -2859,4 +2898,5 @@ if __name__ == "__main__":
     print(f"グラブル古戦場サポート  →  http://localhost:{PORT}")
     threading.Thread(target=prewarm_loop, daemon=True).start()
     threading.Thread(target=gr_loop, daemon=True).start()
+    threading.Thread(target=keepalive_loop, daemon=True).start()
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
