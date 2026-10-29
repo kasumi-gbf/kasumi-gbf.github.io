@@ -2633,8 +2633,8 @@ def api_board_post(data):
     return {"status": "ok", "board": _board.update(fn)}, 200
 
 
-# アンケートは完全匿名で、回答者の名前は受け取らない。団員向けの応答には票数と回答人数だけを載せ、
-# 各回答の内容とコメント(名前なし)は管理パスワードを持つ人にだけ返す。SURVEY_PW を設定すれば撤退・対戦相手用の
+# アンケートは完全匿名で、回答者の名前は受け取らない。団員向けの応答には質問と選択肢だけを載せ、
+# 票数と各回答の内容・コメント(名前なし)は管理パスワードを持つ人にだけ返す。SURVEY_PW を設定すれば撤退・対戦相手用の
 # RETREAT_PW と分けられる(団長だけが結果を見る運用にできる)。
 SURVEY_PW = os.environ.get("SURVEY_PW", "") or RETREAT_PW
 _SURVEY_META = ("id", "title", "desc", "options", "multi", "closed", "created")
@@ -2645,19 +2645,18 @@ def _token_hash(token):
 
 
 def _survey_public(s):
+    return {k: s.get(k) for k in _SURVEY_META}
+
+
+def _survey_detail(s):
+    # 回答は名前を持たない。キーはリセット用の識別子で、回答時刻の順に並べて返す
     counts = [0] * len(s.get("options", []))
     for v in s.get("votes", {}).values():
         for i in v.get("c", []):
             if 0 <= i < len(counts):
                 counts[i] += 1
-    return {**{k: s.get(k) for k in _SURVEY_META},
-            "counts": counts, "respondents": len(s.get("votes", {}))}
-
-
-def _survey_detail(s):
-    # 回答は名前を持たない。キーはリセット用の識別子で、回答時刻の順に並べて返す
     votes = sorted(s.get("votes", {}).items(), key=lambda kv: kv[1].get("t", ""))
-    return {**_survey_public(s),
+    return {**_survey_public(s), "counts": counts,
             "votes": [{"k": key, **{k: v.get(k) for k in ("c", "m", "t")}} for key, v in votes]}
 
 
