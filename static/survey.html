@@ -23,11 +23,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans",
 .back{font-size:12.5px;color:var(--mut);text-decoration:none;}
 h1{font-size:19px;margin:10px 0 4px;display:flex;align-items:center;gap:8px;}
 .lead{color:var(--mut);font-size:13px;margin:0 0 18px;line-height:1.7;}
-.me{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:18px;}
-.me label{font-size:12.5px;color:var(--mut);white-space:nowrap;}
 select,input,textarea{font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;}
 select:focus,input:focus,textarea:focus{border-color:var(--sakura);}
-.me select{flex:1;min-width:0;}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;}
 .card.closed{opacity:.85;}
 .head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
@@ -46,7 +43,6 @@ select:focus,input:focus,textarea:focus{border-color:var(--sakura);}
 .opt > *:not(.bar){position:relative;z-index:1;}
 .opt .label{flex:1;font-size:13.5px;}
 .opt .count{font-size:12.5px;font-weight:700;color:var(--sakura);font-variant-numeric:tabular-nums;}
-.opt .who{display:block;font-size:11px;color:var(--mut);margin-top:2px;}
 .vote{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
 .vote textarea{width:100%;resize:vertical;min-height:38px;}
 .btns{display:flex;gap:8px;flex-wrap:wrap;}
@@ -56,7 +52,7 @@ button.small{font-size:11.5px;padding:4px 9px;font-weight:500;}
 .detail{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;}
 .detail h3{font-size:12px;color:var(--gold);margin:0 0 6px;}
 .voter{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.6;padding:3px 0;}
-.voter b{min-width:6em;}
+.voter b{min-width:3em;color:var(--mut);font-weight:500;}
 .voter .c{flex:1;color:var(--mut);}
 details.admin{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;}
 details.admin summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--mut);}
@@ -79,19 +75,15 @@ details.admin summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--
     <svg width="24" height="24" viewBox="0 0 40 40" aria-hidden="true"><rect x="8" y="5" width="24" height="30" rx="3" fill="var(--sakura-soft)" stroke="var(--sakura)" stroke-width="2"/><path d="M13 15 L16 18 L21 12" fill="none" stroke="var(--sakura)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><line x1="13" y1="25" x2="27" y2="25" stroke="var(--sakura)" stroke-width="2" stroke-linecap="round"/></svg>
     団アンケート
   </h1>
-  <p class="lead">回答は匿名です。団員に表示されるのは各選択肢の票数だけで、誰がどれを選んだか・コメントは団長だけが確認できます。<br>1人1回答で、回答したときと同じ端末からなら変更・取り消しできます。</p>
-  <div class="me">
-    <label for="meSelect">回答者</label>
-    <select id="meSelect"><option value="">名前を選んでください</option></select>
-  </div>
+  <p class="lead">回答は完全匿名で、名前は記録されません。団員に表示されるのは各選択肢の票数だけで、コメントは団長だけが確認できます。<br>1つの端末につき1回答で、回答したときと同じ端末からなら変更・取り消しできます。</p>
   <div id="list"><div class="empty">読み込み中…（サーバー起動時は30秒ほどかかります）</div></div>
 
   <details class="admin" id="adminBox">
-    <summary>団長用：回答者の確認・アンケートの作成</summary>
+    <summary>団長用：回答内容の確認・アンケートの作成</summary>
     <div class="form">
       <label for="pw">管理パスワード</label>
       <input id="pw" type="password" autocomplete="off">
-      <div class="btns"><button type="button" id="detailBtn">回答者を表示する</button></div>
+      <div class="btns"><button type="button" id="detailBtn">回答内容を表示する</button></div>
       <label for="newTitle">タイトル</label>
       <input id="newTitle" type="text" maxlength="80" placeholder="例: 次回古戦場の朝活時間">
       <label for="newDesc">説明（任意）</label>
@@ -105,16 +97,17 @@ details.admin summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--
 </div>
 <div class="status" id="status" role="status"></div>
 <script>
-let members = [], surveys = [], detail = null, loaded = false, statusTimer = null;
+let surveys = [], detail = null, loaded = false, statusTimer = null;
 const drafts = {};
-const meSel = document.getElementById('meSelect'), pwIn = document.getElementById('pw');
+const pwIn = document.getElementById('pw');
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function me(){ return meSel.value; }
 function store(){ try { return JSON.parse(localStorage.getItem('kasumi_votes') || '{}'); } catch (e) { return {}; } }
 function saveStore(s){ try { localStorage.setItem('kasumi_votes', JSON.stringify(s)); } catch (e) {} }
-function myVote(id){ return store()[id + '|' + me()] || null; }
-function setMyVote(id, v){ const s = store(); if (v) s[id + '|' + me()] = v; else delete s[id + '|' + me()]; saveStore(s); }
+// 以前は「アンケートID|名前」で保存していたので、その形で残っている回答も自分の回答として扱う
+function oldKeys(s, id){ return Object.keys(s).filter(k => k.startsWith(id + '|')); }
+function myVote(id){ const s = store(); return s[id] || s[oldKeys(s, id)[0]] || null; }
+function setMyVote(id, v){ const s = store(); oldKeys(s, id).forEach(k => delete s[k]); if (v) s[id] = v; else delete s[id]; saveStore(s); }
 
 function toast(text, isErr){
   const el = document.getElementById('status');
@@ -134,33 +127,24 @@ async function api(path, payload){
 async function load(){
   try {
     const d = await api('/api/surveys');
-    members = d.members || []; surveys = d.surveys || []; loaded = true;
-    renderMembers(); render();
+    surveys = d.surveys || []; loaded = true;
+    render();
   } catch (e) {
     if (!loaded) document.getElementById('list').innerHTML = '<div class="empty">読み込めませんでした。ページを再読み込みしてください。</div>';
   }
 }
-
-function renderMembers(){
-  const cur = me() || (() => { try { return localStorage.getItem('kasumi_me') || ''; } catch (e) { return ''; } })();
-  meSel.innerHTML = '<option value="">名前を選んでください</option>' +
-    members.map(m => `<option value="${esc(m)}"${m === cur ? ' selected' : ''}>${esc(m)}</option>`).join('');
-}
-meSel.onchange = () => { try { localStorage.setItem('kasumi_me', me()); } catch (e) {} Object.keys(drafts).forEach(k => delete drafts[k]); render(); };
 
 function render(){
   const list = document.getElementById('list');
   if (!surveys.length) { list.innerHTML = '<div class="empty">現在アンケートはありません。</div>'; return; }
   list.innerHTML = '';
   surveys.forEach(s => {
-    const mine = me() ? myVote(s.id) : null;
+    const mine = myVote(s.id);
     const draft = drafts[s.id] || {c: mine ? mine.c.slice() : [], m: mine ? mine.m || '' : ''};
     drafts[s.id] = draft;
     const det = detail ? detail.find(d => d.id === s.id) : null;
-    const who = s.options.map(() => []);
-    if (det) Object.entries(det.votes).forEach(([n, v]) => (v.c || []).forEach(i => who[i] && who[i].push(n)));
     const max = Math.max(1, ...s.counts);
-    const canVote = !s.closed && !!me();
+    const canVote = !s.closed;
 
     const card = document.createElement('div');
     card.className = 'card' + (s.closed ? ' closed' : '');
@@ -172,15 +156,15 @@ function render(){
       <div class="opts">${s.options.map((o, i) => `
         <div class="opt${canVote ? '' : ' disabled'}${draft.c.includes(i) ? ' picked' : ''}" data-i="${i}" role="${s.multi ? 'checkbox' : 'radio'}" aria-label="${esc(o)}" aria-checked="${draft.c.includes(i)}" tabindex="${canVote ? 0 : -1}">
           <div class="bar" style="width:${Math.round(s.counts[i] / max * 100)}%"></div>
-          <span class="label">${draft.c.includes(i) ? '● ' : ''}${esc(o)}${det && who[i].length ? `<span class="who">${who[i].map(esc).join('、')}</span>` : ''}</span>
+          <span class="label">${draft.c.includes(i) ? '● ' : ''}${esc(o)}</span>
           <span class="count">${s.counts[i]}</span>
         </div>`).join('')}</div>
       ${canVote ? `<div class="vote">
         <textarea maxlength="200" rows="1" placeholder="コメント（任意・団長のみ閲覧）">${esc(draft.m)}</textarea>
         <div class="btns"><button class="primary send" type="button">${mine ? '回答を変更' : '回答する'}</button>${mine ? '<button class="cancel" type="button">回答を取り消す</button>' : ''}</div>
-      </div>` : (!s.closed ? '<p class="meta">回答するには、上の「回答者」で自分の名前を選んでください。</p>' : '')}
-      ${det ? `<div class="detail"><h3>団長のみ表示：回答者（${Object.keys(det.votes).length}人）</h3>${Object.entries(det.votes).map(([n, v]) => `
-        <div class="voter"><b>${esc(n)}</b><span class="c">${(v.c || []).map(i => esc(s.options[i] || '')).join('、')}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-m="${esc(n)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
+      </div>` : ''}
+      ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${det.votes.map((v, n) => `
+        <div class="voter"><b>#${n + 1}</b><span class="c">${(v.c || []).map(i => esc(s.options[i] || '')).join('、')}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-k="${esc(v.k)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
         <div class="admin-row"><button type="button" class="adm" data-a="${s.closed ? 'reopen' : 'close'}">${s.closed ? '受付を再開' : '締め切る'}</button><button type="button" class="adm" data-a="delete">削除</button></div>
       </div>` : ''}`;
 
@@ -207,7 +191,7 @@ function render(){
         run();
       };
     };
-    card.querySelectorAll('.reset').forEach(b => confirmTwice(b, 'もう一度押すとリセット', () => admin({action:'reset_vote', id: s.id, member: b.dataset.m})));
+    card.querySelectorAll('.reset').forEach(b => confirmTwice(b, 'もう一度押すとリセット', () => admin({action:'reset_vote', id: s.id, key: b.dataset.k})));
     card.querySelectorAll('.adm').forEach(b => {
       if (b.dataset.a === 'delete') confirmTwice(b, 'もう一度押すと削除', () => admin({action:'delete', id: s.id}));
       else b.onclick = () => admin({action: b.dataset.a, id: s.id});
@@ -220,7 +204,7 @@ async function vote(id, body){
   const mine = myVote(id);
   toast('送信中…');
   try {
-    const d = await api('/api/survey_vote', Object.assign({id, member: me(), token: mine ? mine.token : ''}, body));
+    const d = await api('/api/survey_vote', Object.assign({id, token: mine ? mine.token : ''}, body));
     surveys = d.surveys; delete drafts[id];
     if (body.cancel) { setMyVote(id, null); toast('取り消しました'); }
     else { setMyVote(id, {token: d.token, c: body.choices.slice().sort((a, b) => a - b), m: body.comment}); toast('回答しました'); }
@@ -236,7 +220,7 @@ async function refreshDetail(quiet){
   try {
     const d = await api('/api/survey_admin', {pw: pwIn.value, action: 'detail'});
     surveys = d.surveys; detail = d.detail;
-    if (!quiet) toast('回答者を表示しました');
+    if (!quiet) toast('回答内容を表示しました');
   } catch (e) { detail = null; toast(e.message, true); }
   render();
 }
@@ -264,7 +248,7 @@ document.getElementById('createBtn').onclick = async () => {
 load();
 setInterval(() => {
   const a = document.activeElement;
-  if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+  if (a && /^(INPUT|TEXTAREA)$/.test(a.tagName)) return;
   if (detail) refreshDetail(true); else load();
 }, 30000);
 </script>

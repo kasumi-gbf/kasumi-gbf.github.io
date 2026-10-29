@@ -2633,8 +2633,8 @@ def api_board_post(data):
     return {"status": "ok", "board": _board.update(fn)}, 200
 
 
-# アンケートは匿名。団員向けの応答には票数と回答人数だけを載せ、誰が何を選んだかと
-# コメントは管理パスワードを持つ人にだけ返す。SURVEY_PW を設定すれば撤退・対戦相手用の
+# アンケートは完全匿名で、回答者の名前は受け取らない。団員向けの応答には票数と回答人数だけを載せ、
+# 各回答の内容とコメント(名前なし)は管理パスワードを持つ人にだけ返す。SURVEY_PW を設定すれば撤退・対戦相手用の
 # RETREAT_PW と分けられる(団長だけが結果を見る運用にできる)。
 SURVEY_PW = os.environ.get("SURVEY_PW", "") or RETREAT_PW
 _SURVEY_META = ("id", "title", "desc", "options", "multi", "closed", "created")
@@ -2655,14 +2655,14 @@ def _survey_public(s):
 
 
 def _survey_detail(s):
+    # 回答は名前を持たない。キーはリセット用の識別子で、回答時刻の順に並べて返す
+    votes = sorted(s.get("votes", {}).items(), key=lambda kv: kv[1].get("t", ""))
     return {**_survey_public(s),
-            "votes": {name: {k: v.get(k) for k in ("c", "m", "t")}
-                      for name, v in s.get("votes", {}).items()}}
+            "votes": [{"k": key, **{k: v.get(k) for k in ("c", "m", "t")}} for key, v in votes]}
 
 
 def api_surveys(q):
-    return {"members": member_list(),
-            "surveys": [_survey_public(s) for s in _survey.get().get("list", [])]}
+    return {"surveys": [_survey_public(s) for s in _survey.get().get("list", [])]}
 
 
 def _find_survey(m, sid):
@@ -2673,11 +2673,9 @@ def _find_survey(m, sid):
 
 
 def api_survey_vote(data):
-    """1人1票。初回の回答で合言葉(token)を発行し、変更・取り消しにはそれを求める。
-    画面は合言葉をブラウザに保存するので、回答した端末からなら変更できる"""
-    sid, member = str(data.get("id") or ""), _text(data.get("member"), 30)
-    if member not in member_list():
-        return {"error": "団員名をリストから選んでください"}, 400
+    """回答者の名前は持たない。初回の回答で合言葉(token)を発行し、変更・取り消しにはそれを求める。
+    画面は合言葉をブラウザに保存するので、端末ごとに1回答で、回答した端末からなら変更できる"""
+    sid = str(data.get("id") or "")
     comment = _text(data.get("comment"), 200)
     choices, token, cancel = data.get("choices") or [], str(data.get("token") or ""), bool(data.get("cancel"))
     if not isinstance(choices, list):
@@ -2689,14 +2687,14 @@ def api_survey_vote(data):
         if s.get("closed"):
             raise PermissionError("このアンケートは締め切られています")
         votes = s.setdefault("votes", {})
-        old = votes.get(member)
-        if old and not (token and hmac.compare_digest(old.get("h", ""), _token_hash(token))):
-            raise PermissionError("この名前はすでに回答済みです。変更・取り消しは回答したときと同じ端末から行ってください。"
-                                  "心当たりがない場合は団長に連絡してください")
+        key = None
+        if token:
+            th = _token_hash(token)
+            key = next((k for k, v in votes.items() if hmac.compare_digest(v.get("h", ""), th)), None)
         if cancel:
-            if not old:
+            if not key:
                 raise LookupError("まだ回答していません")
-            votes.pop(member)
+            votes.pop(key)
             return
         n = len(s.get("options", []))
         picked = sorted({c for c in choices if isinstance(c, int) and 0 <= c < n})
@@ -2704,12 +2702,13 @@ def api_survey_vote(data):
             raise ValueError("選択肢を選んでください")
         if not s.get("multi") and len(picked) > 1:
             raise ValueError("選択肢は1つだけ選んでください")
-        if old:
-            h = old["h"]
+        if key:
+            h = votes[key]["h"]
         else:
             issued["token"] = secrets.token_urlsafe(16)
             h = _token_hash(issued["token"])
-        votes[member] = {"c": picked, "m": comment, "t": _now_iso(), "h": h}
+            key = secrets.token_hex(6)
+        votes[key] = {"c": picked, "m": comment, "t": _now_iso(), "h": h}
     m = _survey.update(fn)
     return {"status": "ok", "token": issued.get("token") or token,
             "surveys": [_survey_public(s) for s in m.get("list", [])]}, 200
@@ -2744,11 +2743,11 @@ def api_survey_admin(data):
             _find_survey(m, sid)
             m["list"] = [s for s in m["list"] if s.get("id") != sid]
     elif action == "reset_vote":
-        member = str(data.get("member") or "")
+        key = str(data.get("key") or "")
 
         def fn(m):
-            if _find_survey(m, sid).get("votes", {}).pop(member, None) is None:
-                raise LookupError("その団員の回答はありません")
+            if _find_survey(m, sid).get("votes", {}).pop(key, None) is None:
+                raise LookupError("その回答はありません")
     else:
         return {"error": "操作が不正です"}, 400
     lst = _survey.update(fn).get("list", [])
