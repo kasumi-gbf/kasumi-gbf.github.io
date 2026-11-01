@@ -54,7 +54,7 @@ select:focus,input:focus,textarea:focus{border-color:var(--sakura);}
 .seg button.on0{background:var(--sakura);border-color:var(--sakura);color:#fff;}
 .seg button.on1{background:var(--mut);border-color:var(--mut);color:var(--card);}
 .seg button.on2{background:var(--mint);border-color:var(--mint);color:#fff;}
-.seg .n{font-variant-numeric:tabular-nums;opacity:.85;margin-left:4px;}
+.tally{border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:8px;font-variant-numeric:tabular-nums;}
 @media (max-width:480px){ .grow .rl{flex-basis:100%;} }
 .vote{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
 .vote textarea{width:100%;resize:vertical;min-height:38px;}
@@ -178,7 +178,7 @@ function render(){
       ${s.rows ? `<div class="grid">
         ${canVote ? `<div class="bulk">${s.options.map((o, j) => `<button type="button" data-all="${j}">全部${esc(o)}</button>`).join('')}</div>` : ''}
         ${s.rows.map((r, i) => `<div class="grow"><span class="rl">${esc(r)}</span><div class="seg" role="radiogroup" aria-label="${esc(r)}">${s.options.map((o, j) => `
-          <button type="button" role="radio" aria-checked="${draft.c[i] === j}" class="${draft.c[i] === j ? 'on' + Math.min(j, 2) : ''}" data-r="${i}" data-j="${j}"${canVote ? '' : ' disabled'}>${esc(o)}${det ? `<span class="n">${det.counts[i][j]}</span>` : ''}</button>`).join('')}</div></div>`).join('')}
+          <button type="button" role="radio" aria-checked="${draft.c[i] === j}" class="${draft.c[i] === j ? 'on' + Math.min(j, 2) : ''}" data-r="${i}" data-j="${j}"${canVote ? '' : ' disabled'}>${esc(o)}</button>`).join('')}</div></div>`).join('')}
       </div>` : `<div class="opts">${s.options.map((o, i) => `
         <div class="opt${canVote ? '' : ' disabled'}${draft.c.includes(i) ? ' picked' : ''}" data-i="${i}" role="${s.multi ? 'checkbox' : 'radio'}" aria-label="${esc(o)}" aria-checked="${draft.c.includes(i)}" tabindex="${canVote ? 0 : -1}">
           ${det ? `<div class="bar" style="width:${Math.round(det.counts[i] / max * 100)}%"></div>` : ''}
@@ -189,7 +189,8 @@ function render(){
         <textarea maxlength="200" rows="1" placeholder="他希望コメント（任意・団長のみ閲覧）">${esc(draft.m)}</textarea>
         <div class="btns"><button class="primary send" type="button">${mine ? '回答を変更' : '回答する'}</button>${mine ? '<button class="cancel" type="button">回答を取り消す</button>' : ''}</div>
       </div>` : ''}
-      ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${det.votes.map((v, n) => `
+      ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${s.rows ? `<div class="tally">${s.rows.map((r, i) => `
+        <div class="voter"><b>${esc(r)}</b><span class="c">${s.options.map((o, j) => `${esc(o)} ${det.counts[i][j]}`).join('・')}</span></div>`).join('')}</div>` : ''}${det.votes.map((v, n) => `
         <div class="voter"><b>#${n + 1}</b><span class="c">${answerText(s, v.c || [])}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-k="${esc(v.k)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
         <div class="admin-row"><button type="button" class="adm" data-a="${s.closed ? 'reopen' : 'close'}">${s.closed ? '受付を再開' : '締め切る'}</button><button type="button" class="adm" data-a="delete">削除</button></div>
       </div>` : ''}`;
