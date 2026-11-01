@@ -2637,7 +2637,9 @@ def api_board_post(data):
 # 票数と各回答の内容・コメント(名前なし)は管理パスワードを持つ人にだけ返す。SURVEY_PW を設定すれば撤退・対戦相手用の
 # RETREAT_PW と分けられる(団長だけが結果を見る運用にできる)。
 SURVEY_PW = os.environ.get("SURVEY_PW", "") or RETREAT_PW
-_SURVEY_META = ("id", "title", "desc", "options", "multi", "closed", "created")
+# rows があるアンケートは「日ごとに選ぶ」形式。rows の各項目(本戦1日目など)について options から1つずつ選び、
+# 票の c は rows と同じ長さの選択肢番号のリストになる
+_SURVEY_META = ("id", "title", "desc", "options", "rows", "multi", "closed", "created")
 
 
 def _token_hash(token):
@@ -2650,11 +2652,19 @@ def _survey_public(s):
 
 def _survey_detail(s):
     # 回答は名前を持たない。キーはリセット用の識別子で、回答時刻の順に並べて返す
-    counts = [0] * len(s.get("options", []))
-    for v in s.get("votes", {}).values():
-        for i in v.get("c", []):
-            if 0 <= i < len(counts):
-                counts[i] += 1
+    n = len(s.get("options", []))
+    if s.get("rows"):
+        counts = [[0] * n for _ in s["rows"]]
+        for v in s.get("votes", {}).values():
+            for r, i in enumerate(v.get("c", [])[:len(counts)]):
+                if isinstance(i, int) and 0 <= i < n:
+                    counts[r][i] += 1
+    else:
+        counts = [0] * n
+        for v in s.get("votes", {}).values():
+            for i in v.get("c", []):
+                if 0 <= i < n:
+                    counts[i] += 1
     votes = sorted(s.get("votes", {}).items(), key=lambda kv: kv[1].get("t", ""))
     return {**_survey_public(s), "counts": counts,
             "votes": [{"k": key, **{k: v.get(k) for k in ("c", "m", "t")}} for key, v in votes]}
@@ -2696,11 +2706,16 @@ def api_survey_vote(data):
             votes.pop(key)
             return
         n = len(s.get("options", []))
-        picked = sorted({c for c in choices if isinstance(c, int) and 0 <= c < n})
-        if not picked:
-            raise ValueError("選択肢を選んでください")
-        if not s.get("multi") and len(picked) > 1:
-            raise ValueError("選択肢は1つだけ選んでください")
+        if s.get("rows"):
+            picked = choices
+            if len(picked) != len(s["rows"]) or not all(isinstance(c, int) and 0 <= c < n for c in picked):
+                raise ValueError("すべての項目で選択肢を選んでください")
+        else:
+            picked = sorted({c for c in choices if isinstance(c, int) and 0 <= c < n})
+            if not picked:
+                raise ValueError("選択肢を選んでください")
+            if not s.get("multi") and len(picked) > 1:
+                raise ValueError("選択肢は1つだけ選んでください")
         if key:
             h = votes[key]["h"]
         else:
@@ -2726,11 +2741,16 @@ def api_survey_admin(data):
     if action == "create":
         title, desc = _text(data.get("title"), 80), _text(data.get("desc"), 400)
         opts = [_text(o, 60) for o in (data.get("options") or []) if str(o or "").strip()]
+        rows = [_text(r, 40) for r in (data.get("rows") or []) if str(r or "").strip()]
         if not title or not 2 <= len(opts) <= 10:
             return {"error": "タイトルと2〜10個の選択肢を入力してください"}, 400
+        if data.get("grid") and not 1 <= len(rows) <= 10:
+            return {"error": "日ごとに選ぶ形式では、項目を1〜10個入力してください"}, 400
         new = {"id": format(int(time.time() * 1000), "x"), "title": title, "desc": desc,
-               "options": opts, "multi": bool(data.get("multi")), "closed": False,
+               "options": opts, "multi": bool(data.get("multi")) and not rows, "closed": False,
                "created": _now_iso(), "votes": {}}
+        if rows:
+            new["rows"] = rows
 
         def fn(m):
             m.setdefault("list", []).insert(0, new)
