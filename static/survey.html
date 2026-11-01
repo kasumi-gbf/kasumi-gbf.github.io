@@ -43,6 +43,19 @@ select:focus,input:focus,textarea:focus{border-color:var(--sakura);}
 .opt > *:not(.bar){position:relative;z-index:1;}
 .opt .label{flex:1;font-size:13.5px;}
 .opt .count{font-size:12.5px;font-weight:700;color:var(--sakura);font-variant-numeric:tabular-nums;}
+.grid{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+.grid .bulk{display:flex;gap:6px;flex-wrap:wrap;}
+.grid .bulk button{font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:999px;background:var(--bg);color:var(--mut);}
+.grow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+.grow .rl{font-size:13.5px;font-weight:700;min-width:6.5em;}
+.seg{display:flex;gap:6px;flex:1;min-width:0;}
+.seg button{flex:1;min-width:0;white-space:nowrap;font-size:12.5px;padding:7px 6px;}
+.seg button:disabled{cursor:default;}
+.seg button.on0{background:var(--sakura);border-color:var(--sakura);color:#fff;}
+.seg button.on1{background:var(--mut);border-color:var(--mut);color:var(--card);}
+.seg button.on2{background:var(--mint);border-color:var(--mint);color:#fff;}
+.seg .n{font-variant-numeric:tabular-nums;opacity:.85;margin-left:4px;}
+@media (max-width:480px){ .grow .rl{flex-basis:100%;} }
 .vote{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
 .vote textarea{width:100%;resize:vertical;min-height:38px;}
 .btns{display:flex;gap:8px;flex-wrap:wrap;}
@@ -90,7 +103,10 @@ details.admin summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--
       <textarea id="newDesc" maxlength="400" rows="2"></textarea>
       <label for="newOpts">選択肢（1行に1つ、2〜10個）</label>
       <textarea id="newOpts" rows="4" placeholder="6時〜&#10;7時〜&#10;どちらでも"></textarea>
-      <label><input id="newMulti" type="checkbox"> 複数選択を許可する</label>
+      <label id="multiLabel"><input id="newMulti" type="checkbox"> 複数選択を許可する</label>
+      <label><input id="newGrid" type="checkbox"> 日ごとに選ぶ形式にする（項目ごとに選択肢から1つ選ぶ）</label>
+      <label for="newRows" id="rowsLabel" hidden>項目（1行に1つ、1〜10個）</label>
+      <textarea id="newRows" rows="4" placeholder="本戦1日目&#10;本戦2日目&#10;本戦3日目&#10;本戦4日目" hidden></textarea>
       <div class="btns"><button class="primary" type="button" id="createBtn">作成する</button></div>
     </div>
   </details>
@@ -108,6 +124,12 @@ function saveStore(s){ try { localStorage.setItem('kasumi_votes', JSON.stringify
 function oldKeys(s, id){ return Object.keys(s).filter(k => k.startsWith(id + '|')); }
 function myVote(id){ const s = store(); return s[id] || s[oldKeys(s, id)[0]] || null; }
 function setMyVote(id, v){ const s = store(); oldKeys(s, id).forEach(k => delete s[k]); if (v) s[id] = v; else delete s[id]; saveStore(s); }
+
+// 回答内容を文字にする。日ごと形式は「本戦1日目：防衛あり、…」
+function answerText(s, c){
+  if (s.rows) return s.rows.map((r, i) => esc(r) + '：' + esc(s.options[c[i]] ?? '未選択')).join('、');
+  return c.map(i => esc(s.options[i] || '')).join('、');
+}
 
 function toast(text, isErr){
   const el = document.getElementById('status');
@@ -140,10 +162,10 @@ function render(){
   list.innerHTML = '';
   surveys.forEach(s => {
     const mine = myVote(s.id);
-    const draft = drafts[s.id] || {c: mine ? mine.c.slice() : [], m: mine ? mine.m || '' : ''};
+    const draft = drafts[s.id] || {c: mine ? mine.c.slice() : (s.rows ? s.rows.map(() => null) : []), m: mine ? mine.m || '' : ''};
     drafts[s.id] = draft;
     const det = detail ? detail.find(d => d.id === s.id) : null;
-    const max = det ? Math.max(1, ...det.counts) : 1;
+    const max = det && !s.rows ? Math.max(1, ...det.counts) : 1;
     const canVote = !s.closed;
 
     const card = document.createElement('div');
@@ -151,23 +173,31 @@ function render(){
     card.innerHTML = `
       <div class="head"><div class="title">${esc(s.title)}</div><span class="pill ${s.closed ? 'closed' : 'open'}">${s.closed ? '締切' : '受付中'}</span></div>
       ${s.desc ? `<p class="desc">${esc(s.desc)}</p>` : ''}
-      <div class="meta">${s.multi ? '複数選択可' : '1つ選択'}</div>
-      ${mine ? `<div class="mine-note">あなたの回答：${mine.c.map(i => esc(s.options[i] || '')).join('、')}</div>` : ''}
-      <div class="opts">${s.options.map((o, i) => `
+      <div class="meta">${s.rows ? '項目ごとに1つ選択' : s.multi ? '複数選択可' : '1つ選択'}</div>
+      ${mine ? `<div class="mine-note">あなたの回答：${answerText(s, mine.c)}</div>` : ''}
+      ${s.rows ? `<div class="grid">
+        ${canVote ? `<div class="bulk">${s.options.map((o, j) => `<button type="button" data-all="${j}">全部${esc(o)}</button>`).join('')}</div>` : ''}
+        ${s.rows.map((r, i) => `<div class="grow"><span class="rl">${esc(r)}</span><div class="seg" role="radiogroup" aria-label="${esc(r)}">${s.options.map((o, j) => `
+          <button type="button" role="radio" aria-checked="${draft.c[i] === j}" class="${draft.c[i] === j ? 'on' + Math.min(j, 2) : ''}" data-r="${i}" data-j="${j}"${canVote ? '' : ' disabled'}>${esc(o)}${det ? `<span class="n">${det.counts[i][j]}</span>` : ''}</button>`).join('')}</div></div>`).join('')}
+      </div>` : `<div class="opts">${s.options.map((o, i) => `
         <div class="opt${canVote ? '' : ' disabled'}${draft.c.includes(i) ? ' picked' : ''}" data-i="${i}" role="${s.multi ? 'checkbox' : 'radio'}" aria-label="${esc(o)}" aria-checked="${draft.c.includes(i)}" tabindex="${canVote ? 0 : -1}">
           ${det ? `<div class="bar" style="width:${Math.round(det.counts[i] / max * 100)}%"></div>` : ''}
           <span class="label">${draft.c.includes(i) ? '● ' : ''}${esc(o)}</span>
           ${det ? `<span class="count">${det.counts[i]}</span>` : ''}
-        </div>`).join('')}</div>
+        </div>`).join('')}</div>`}
       ${canVote ? `<div class="vote">
         <textarea maxlength="200" rows="1" placeholder="他希望コメント（任意・団長のみ閲覧）">${esc(draft.m)}</textarea>
         <div class="btns"><button class="primary send" type="button">${mine ? '回答を変更' : '回答する'}</button>${mine ? '<button class="cancel" type="button">回答を取り消す</button>' : ''}</div>
       </div>` : ''}
       ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${det.votes.map((v, n) => `
-        <div class="voter"><b>#${n + 1}</b><span class="c">${(v.c || []).map(i => esc(s.options[i] || '')).join('、')}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-k="${esc(v.k)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
+        <div class="voter"><b>#${n + 1}</b><span class="c">${answerText(s, v.c || [])}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-k="${esc(v.k)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
         <div class="admin-row"><button type="button" class="adm" data-a="${s.closed ? 'reopen' : 'close'}">${s.closed ? '受付を再開' : '締め切る'}</button><button type="button" class="adm" data-a="delete">削除</button></div>
       </div>` : ''}`;
 
+    if (canVote && s.rows) {
+      card.querySelectorAll('[data-r]').forEach(b => { b.onclick = () => { draft.c[b.dataset.r] = Number(b.dataset.j); render(); }; });
+      card.querySelectorAll('[data-all]').forEach(b => { b.onclick = () => { draft.c = s.rows.map(() => Number(b.dataset.all)); render(); }; });
+    }
     if (canVote) {
       card.querySelectorAll('.opt').forEach(el => {
         const pick = () => {
@@ -181,7 +211,10 @@ function render(){
       });
       const ta = card.querySelector('textarea');
       ta.oninput = () => { draft.m = ta.value; };
-      card.querySelector('.send').onclick = () => vote(s.id, {choices: draft.c, comment: ta.value.trim()});
+      card.querySelector('.send').onclick = () => {
+        if (s.rows && draft.c.some(c => c === null)) { toast('すべての項目で選んでください', true); return; }
+        vote(s.id, {choices: draft.c, comment: ta.value.trim()});
+      };
       const cancel = card.querySelector('.cancel');
       if (cancel) cancel.onclick = () => vote(s.id, {cancel: true});
     }
@@ -207,7 +240,7 @@ async function vote(id, body){
     const d = await api('/api/survey_vote', Object.assign({id, token: mine ? mine.token : ''}, body));
     surveys = d.surveys; delete drafts[id];
     if (body.cancel) { setMyVote(id, null); toast('取り消しました'); }
-    else { setMyVote(id, {token: d.token, c: body.choices.slice().sort((a, b) => a - b), m: body.comment}); toast('回答しました'); }
+    else { setMyVote(id, {token: d.token, c: (surveys.find(x => x.id === id) || {}).rows ? body.choices.slice() : body.choices.slice().sort((a, b) => a - b), m: body.comment}); toast('回答しました'); }
     if (detail) await refreshDetail(true);
   } catch (e) {
     if (e.message === 'まだ回答していません') setMyVote(id, null);
@@ -238,11 +271,18 @@ async function admin(payload){
 
 document.getElementById('detailBtn').onclick = () => refreshDetail(false);
 pwIn.oninput = () => { if (detail) { detail = null; render(); } };
+document.getElementById('newGrid').onchange = e => {
+  const on = e.target.checked;
+  document.getElementById('newRows').hidden = document.getElementById('rowsLabel').hidden = !on;
+  document.getElementById('multiLabel').hidden = on;
+  document.getElementById('newOpts').placeholder = on ? '防衛あり\n防衛なし\nおまかせ' : '6時〜\n7時〜\nどちらでも';
+};
 document.getElementById('createBtn').onclick = async () => {
-  const opts = document.getElementById('newOpts').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const lines = id => document.getElementById(id).value.split('\n').map(s => s.trim()).filter(Boolean);
+  const opts = lines('newOpts'), grid = document.getElementById('newGrid').checked, rows = grid ? lines('newRows') : [];
   const ok = await admin({action:'create', title: document.getElementById('newTitle').value, desc: document.getElementById('newDesc').value,
-    options: opts, multi: document.getElementById('newMulti').checked});
-  if (ok) ['newTitle','newDesc','newOpts'].forEach(id => { document.getElementById(id).value = ''; });
+    options: opts, multi: document.getElementById('newMulti').checked, grid, rows});
+  if (ok) ['newTitle','newDesc','newOpts','newRows'].forEach(id => { document.getElementById(id).value = ''; });
 };
 
 load();
