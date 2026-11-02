@@ -10,11 +10,13 @@
 :root{
   --bg:#fbfaf7; --card:#ffffff; --line:#e3ece9; --ink:#20303a; --mut:#5e7078;
   --sakura:#d97a9a; --mint:#3f9d84; --gold:#b98a3e; --gold-soft:#f6ecd7; --sakura-soft:#fbeaf0; --mint-soft:#e4f5ef;
+  --c0:#c95a80; --c1:#5b6fb8; --c2:#d0a03a;
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#171b1d; --card:#20262a; --line:#333b3f; --ink:#eef1f2; --mut:#9aa7ac;
-    --sakura:#e79bb5; --mint:#5fc2a4; --gold:#d9ad63; --gold-soft:#3a3120; --sakura-soft:#33222a; --mint-soft:#1f2e2a; color-scheme:dark;
+    --sakura:#e79bb5; --mint:#5fc2a4; --gold:#d9ad63; --gold-soft:#3a3120; --sakura-soft:#33222a; --mint-soft:#1f2e2a;
+    --c0:#d46a93; --c1:#7688d8; --c2:#b58b3a; color-scheme:dark;
   }
 }
 *{box-sizing:border-box;}
@@ -54,7 +56,14 @@ select:focus,input:focus,textarea:focus{border-color:var(--sakura);}
 .seg button.on0{background:var(--sakura);border-color:var(--sakura);color:#fff;}
 .seg button.on1{background:var(--mut);border-color:var(--mut);color:var(--card);}
 .seg button.on2{background:var(--mint);border-color:var(--mint);color:#fff;}
-.tally{border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:8px;font-variant-numeric:tabular-nums;}
+/* 日ごと形式の集計グラフ(団長のみ)。系列色 --c0〜2 は色覚の違いでも見分けられるよう検証した3色 */
+.tally{border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:8px;}
+.tally .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-bottom:6px;}
+.tally .legend span{display:inline-flex;align-items:center;gap:6px;}
+.tally .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+.tally svg{display:block;width:100%;height:auto;}
+.tally svg text{font-family:inherit;font-size:13px;font-weight:700;fill:var(--ink);}
+.tally svg .bar{cursor:pointer;}
 @media (max-width:480px){ .grow .rl{flex-basis:100%;} }
 .vote{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
 .vote textarea{width:100%;resize:vertical;min-height:38px;}
@@ -131,6 +140,24 @@ function answerText(s, c){
   return c.map(i => esc(s.options[i] || '')).join('、');
 }
 
+// 日ごと形式の集計を、項目ごとに選択肢の棒を並べた縦棒グラフにする。人数は棒に触れたときだけ出す
+function tallyChart(s, det){
+  const W = 480, H = 180, T = 8, B = 24, base = H - B, n = s.options.length;
+  const max = Math.max(1, ...det.counts.flat());
+  const gw = W / s.rows.length, bw = Math.min(26, (gw - 20) / n - 2);
+  const bars = s.rows.map((r, i) => {
+    const cx = gw * i + gw / 2;
+    return s.options.map((o, j) => {
+      const v = det.counts[i][j], h = v / max * (base - T), x = cx + (j - n / 2) * (bw + 2) + 1, top = base - h, rr = Math.min(4, h, bw / 2);
+      const tip = esc(`${r} ${o}：${v}人`);
+      return `<rect class="bar" x="${x - 1}" y="${T}" width="${bw + 2}" height="${base - T}" fill="transparent" data-tip="${tip}"><title>${tip}</title></rect>` +
+        (h > 0 ? `<path d="M${x},${base}V${top + rr}Q${x},${top} ${x + rr},${top}H${x + bw - rr}Q${x + bw},${top} ${x + bw},${top + rr}V${base}Z" fill="var(--c${Math.min(j, 2)})" pointer-events="none"/>` : '');
+    }).join('') + `<text x="${cx}" y="${H - 6}" text-anchor="middle">${esc(r)}</text>`;
+  }).join('');
+  return `<div class="tally"><div class="legend">${s.options.map((o, j) => `<span><i style="background:var(--c${Math.min(j, 2)})"></i>${esc(o)}</span>`).join('')}</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="項目ごとの回答の棒グラフ">${bars}<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--mut)" stroke-opacity=".5"/></svg></div>`;
+}
+
 function toast(text, isErr){
   const el = document.getElementById('status');
   el.textContent = text;
@@ -189,8 +216,7 @@ function render(){
         <textarea maxlength="200" rows="1" placeholder="他希望コメント（任意・団長のみ閲覧）">${esc(draft.m)}</textarea>
         <div class="btns"><button class="primary send" type="button">${mine ? '回答を変更' : '回答する'}</button>${mine ? '<button class="cancel" type="button">回答を取り消す</button>' : ''}</div>
       </div>` : ''}
-      ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${s.rows ? `<div class="tally">${s.rows.map((r, i) => `
-        <div class="voter"><b>${esc(r)}</b><span class="c">${s.options.map((o, j) => `${esc(o)} ${det.counts[i][j]}`).join('・')}</span></div>`).join('')}</div>` : ''}${det.votes.map((v, n) => `
+      ${det ? `<div class="detail"><h3>団長のみ表示：回答内容（${det.votes.length}件）</h3>${s.rows ? tallyChart(s, det) : ''}${det.votes.map((v, n) => `
         <div class="voter"><b>#${n + 1}</b><span class="c">${answerText(s, v.c || [])}${v.m ? `／${esc(v.m)}` : ''}</span><button type="button" class="small reset" data-k="${esc(v.k)}">リセット</button></div>`).join('') || '<div class="meta">まだ回答はありません。</div>'}
         <div class="admin-row"><button type="button" class="adm" data-a="${s.closed ? 'reopen' : 'close'}">${s.closed ? '受付を再開' : '締め切る'}</button><button type="button" class="adm" data-a="delete">削除</button></div>
       </div>` : ''}`;
@@ -225,6 +251,7 @@ function render(){
         run();
       };
     };
+    card.querySelectorAll('.tally .bar').forEach(b => { b.onclick = b.onpointerenter = () => toast(b.dataset.tip); });
     card.querySelectorAll('.reset').forEach(b => confirmTwice(b, 'もう一度押すとリセット', () => admin({action:'reset_vote', id: s.id, key: b.dataset.k})));
     card.querySelectorAll('.adm').forEach(b => {
       if (b.dataset.a === 'delete') confirmTwice(b, 'もう一度押すと削除', () => admin({action:'delete', id: s.id}));
